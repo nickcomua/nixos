@@ -1,0 +1,129 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: cachix/cachix-action@v16
+        with:
+          name: nickcomua
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+      - name: Check formatting
+        run: nix fmt -- --check .
+      - name: Lint with statix
+        run: nix run nixpkgs#statix -- check .
+
+  build-nixos:
+    runs-on: ubuntu-latest
+    needs: check
+    steps:
+      - name: Free Disk Space (Ubuntu)
+        uses: jlumbroso/free-disk-space@main
+        with:
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: cachix/cachix-action@v16
+        with:
+          name: nickcomua
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+      - name: Build NixOS (x86_64-linux)
+        run: nix build .#nixosConfigurations.nixos.config.system.build.toplevel --no-link
+
+  build-alta:
+    runs-on: ubuntu-latest
+    needs: check
+    steps:
+      - name: Free Disk Space (Ubuntu)
+        uses: jlumbroso/free-disk-space@main
+        with:
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@main
+        with:
+          extra-conf: "extra-platforms = aarch64-linux"
+      - uses: cachix/cachix-action@v16
+        with:
+          name: nickcomua
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+      - name: Set up QEMU for aarch64
+        run: |
+          sudo apt-get update -q -y
+          sudo apt-get install -q -y qemu-user-static binfmt-support
+      - name: Build Alta (aarch64-linux)
+        run: nix build .#nixosConfigurations.alta.config.system.build.toplevel --no-link
+
+  build-macos:
+    runs-on: macos-latest
+    needs: check
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: cachix/cachix-action@v16
+        with:
+          name: nickcomua
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+      - name: Build macOS (aarch64-darwin)
+        run: nix build .#darwinConfigurations.Mykolas-MacBook-Pro.system --no-link
+
+  # Promotion jobs - push main → stable branches when builds pass
+  promote-nixos:
+    runs-on: ubuntu-latest
+    needs: build-nixos
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Promote to stable-nixos
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git push origin HEAD:stable-nixos --force-with-lease
+
+  promote-alta:
+    runs-on: ubuntu-latest
+    needs: build-alta
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Promote to stable-alta
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git push origin HEAD:stable-alta --force-with-lease
+
+  promote-darwin:
+    runs-on: ubuntu-latest
+    needs: build-macos
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Promote to stable-darwin
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git push origin HEAD:stable-darwin --force-with-lease

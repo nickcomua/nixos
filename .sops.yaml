@@ -1,0 +1,8 @@
+keys:
+  - &nick age1t5f3spz7dp0l6g5kf70vy8m5z0hc96qyl07rdye0y3gcfg20ppnsje8vmt
+
+creation_rules:
+  - path_regex: secrets\.yaml$
+    key_groups:
+      - age:
+          - *nick

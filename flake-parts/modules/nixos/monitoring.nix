@@ -109,6 +109,12 @@
           http_port = 3000;
           domain = "localhost";
         };
+        security.secret_key = "SW2YcwTIb9zpOOhoPsMm";
+        "auth.anonymous" = {
+          enabled = true;
+          org_role = "Admin";
+        };
+        auth.disable_login_form = true;
       };
       provision = {
         enable = true;

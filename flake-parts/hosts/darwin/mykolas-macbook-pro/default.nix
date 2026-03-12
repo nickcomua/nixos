@@ -10,6 +10,7 @@ in {
   imports = [
     inputs.nix-homebrew.darwinModules.nix-homebrew
     inputs.determinate.darwinModules.default
+    ../../../modules/darwin/monitoring.nix
   ];
 
   # Determinate Nix - manages nix configuration

@@ -1,11 +1,4 @@
-{
-  inputs,
-  self,
-  ...
-}: let
-  inherit (inputs.flake-parts.lib) importApply;
-  localFlake = self;
-in {
+_: {
   flake.nixosModules = {
     # NOTE Dogfooding your modules with `importApply` will make them more
     # reusable even outside of your flake. For more info see
@@ -15,5 +8,8 @@ in {
     # issues during flake check (modules reference NixOS-specific options)
     # horse-browser = ./programs/horse-browser;
     # librepods = ./programs/librepods;
+
+    # Monitoring: Grafana + Prometheus (node_exporter + comin) + Loki + Promtail
+    monitoring = ./monitoring.nix;
   };
 }

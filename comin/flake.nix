@@ -1,18 +1,19 @@
 {
   inputs = {
-    nixpkgs.url = "github:nixOS/nixpkgs";
+    nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/0.1";
     comin = {
       url = "github:nlewo/comin";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
   outputs = {
+    self,
     nixpkgs,
     comin,
   }: {
     nixosConfigurations = {
       nixos = nixpkgs.lib.nixosSystem {
-        system = "x86_6-linux";
+        system = "x86_64-linux";
         modules = [
           comin.nixosModules.comin
           {

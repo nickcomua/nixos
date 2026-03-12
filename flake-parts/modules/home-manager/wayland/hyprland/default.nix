@@ -237,11 +237,8 @@ in {
       ];
 
       bind = [
-        # waystt - Speech to Text (press-to-talk)
-        # SUPER+SHIFT+T: start recording, transcribe on release, copy to clipboard
-        # "SUPER_SHIFT,T,exec,${pkgs.procps}/bin/pkill -9 waystt 2>/dev/null; ${pkgs.libnotify}/bin/notify-send -t 2000 '🎤 Recording...' 'Release to transcribe (clipboard)'; waystt --pipe-to ${pkgs.wl-clipboard}/bin/wl-copy &"
-        # SUPER+T: start recording, transcribe on release, type via wtype (supports unicode)
-        # "SUPER,T,exec,${pkgs.procps}/bin/pkill -9 waystt 2>/dev/null; ${pkgs.libnotify}/bin/notify-send -t 2000 '🎤 Recording...' 'Release to transcribe (typing)'; waystt --pipe-to ${pkgs.wtype}/bin/wtype - &"
+        # Whisper dictation - hold CTRL+` to record, release to transcribe + paste
+        "CTRL,grave,exec,whisper-dictate-start"
 
         # starting applications
         "SUPER,RETURN,exec,${pkgs.ghostty}/bin/ghostty"
@@ -313,9 +310,8 @@ in {
     extraConfig = ''
       debug:disable_logs = false
 
-      # waystt - Release to stop recording and transcribe
-      bindr=SUPER,T,exec,${pkgs.procps}/bin/pkill --signal SIGUSR1 waystt
-      bindr=SUPER_SHIFT,T,exec,${pkgs.procps}/bin/pkill --signal SIGUSR1 waystt
+      # Whisper dictation - release CTRL+` to stop recording and transcribe
+      bindr=CTRL,grave,exec,whisper-dictate-stop
 
       # special workspace
       bind=CTRL_SUPER,W,exec,${pkgs.hyprland}/bin/hyprctl dispatch movetoworkspace special

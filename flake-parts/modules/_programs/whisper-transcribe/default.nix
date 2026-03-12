@@ -8,6 +8,7 @@
 with lib; let
   cfg = config.programs.whisper-transcribe;
   whisperTranscribe = import ./package.nix {inherit pkgs lib;};
+  whisperDictate = import ./dictate.nix {inherit pkgs lib;};
 in {
   options.programs.whisper-transcribe = {
     enable = mkEnableOption "Whisper transcription tool";
@@ -20,6 +21,10 @@ in {
   };
 
   config = mkIf cfg.enable {
-    environment.systemPackages = [cfg.package];
+    environment.systemPackages = [
+      cfg.package
+      whisperDictate.startScript
+      whisperDictate.stopScript
+    ];
   };
 }

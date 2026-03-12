@@ -304,6 +304,7 @@ in {
       discord
       bluez
       bluetui
+      pavucontrol
       kdePackages.krdp
     ];
   };

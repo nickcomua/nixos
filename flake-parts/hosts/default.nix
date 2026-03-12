@@ -99,6 +99,7 @@
               useGlobalPkgs = true;
               useUserPackages = true;
               extraSpecialArgs = baseSpecialArgs;
+              sharedModules = [inputs.sops-nix.homeManagerModules.sops];
             };
           }
         ]

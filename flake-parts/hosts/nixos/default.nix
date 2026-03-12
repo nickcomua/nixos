@@ -280,7 +280,6 @@ in {
     systemPackages = with pkgs; [
       vscode
       google-chrome
-      inputs.cursor.packages.x86_64-linux.cursor
       ghostty
       direnv
       fnm
@@ -306,7 +305,6 @@ in {
       bluez
       bluetui
       kdePackages.krdp
-      inputs.antigravity-nix.packages.x86_64-linux.default
     ];
   };
 

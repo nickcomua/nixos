@@ -45,14 +45,31 @@ in {
       "openhue/cli"
     ];
     brews = [
-      "gemini-cli"
       "postgresql@16"
       "iproute2mac"
       "gromgit/fuse/s3fs-mac"
+
       "helm"
       "openhue-cli"
+
+      "automake"
+      {
+        name = "cliproxyapi";
+        start_service = true;
+        restart_service = true;
+      }
+      "dbus"
+      "gdal"
+      "pdal"
+      "cmake"
+      "bat"
+      "git-delta"
+      "glow"
+
+      "scrcpy"
     ];
     casks = [
+      "balenaetcher"
       "balenaetcher"
       "macfuse"
       "background-music"
@@ -65,8 +82,14 @@ in {
       "steam"
       "blender"
       "qgis"
+
       "ghostty"
       "activitywatch"
+
+      # Wine/MT5 support (Whisky bundles its own Wine)
+      "whisky"
+
+      "android-platform-tools"
     ];
     onActivation = {
       cleanup = "zap";

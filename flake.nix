@@ -5,14 +5,19 @@
   inputs = {
     # --- BASE DEPENDENCIES ---
     nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/0.1";
-    flake-parts.url = "github:hercules-ci/flake-parts";
-
-    # --- DARWIN ---
-    nix-darwin = {
-      url = "github:LnL7/nix-darwin";
+    flake-parts = {
+      url = "https://flakehub.com/f/hercules-ci/flake-parts/0";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew";
+    # --- DARWIN ---
+    nix-darwin = {
+      url = "github:nix-darwin/nix-darwin";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    nix-homebrew = {
+      url = "github:zhaofengli-wip/nix-homebrew";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     homebrew-core = {
       url = "github:homebrew/homebrew-core";
       flake = false;
@@ -35,8 +40,14 @@
       url = "https://flakehub.com/f/DeterminateSystems/determinate/3";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    vscode-server.url = "github:nix-community/nixos-vscode-server";
-    nix-dokploy.url = "github:el-kurto/nix-dokploy";
+    vscode-server = {
+      url = "github:nix-community/nixos-vscode-server";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    nix-dokploy = {
+      url = "github:el-kurto/nix-dokploy";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     # --- SHARED ---
     home-manager = {
@@ -44,7 +55,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     sops-nix = {
-      url = "github:Mic92/sops-nix";
+      url = "https://flakehub.com/f/Mic92/sops-nix/0";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nix-openclaw = {
@@ -53,7 +64,10 @@
     };
 
     # --- MAIN PC SPECIFIC ---
-    devenv.url = "github:cachix/devenv";
+    devenv = {
+      url = "github:cachix/devenv";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     devenv-root = {
       url = "file+file:///dev/null";
       flake = false;
@@ -66,27 +80,12 @@
       url = "github:vicinaehq/vicinae";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    mk-shell-bin.url = "github:rrbutani/nix-mk-shell-bin";
-    nix2container = {
-      url = "github:nlewo/nix2container";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    systems.url = "github:nix-systems/default";
-    crane = {
-      url = "github:ipetkov/crane";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     librepods = {
       url = "github:kavishdevar/librepods/linux/rust";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     aw-watcher-window-hyprland = {
       url = "github:bobvanderlinden/aw-watcher-window-hyprland";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    cursor.url = "github:TudorAndrei/cursor-nixos-flake";
-    antigravity-nix = {
-      url = "github:jacopone/antigravity-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };

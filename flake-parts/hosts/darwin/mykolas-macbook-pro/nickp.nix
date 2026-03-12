@@ -19,7 +19,4 @@
       "/Users/nickp/.deno/bin"
     ];
   };
-
-  # Enable OpenClaw (config is in shared/clawdbot.nix)
-  programs.openclaw.enable = true;
 }

@@ -15,6 +15,7 @@ in {
   # Determinate Nix - manages nix configuration
   nix.enable = false;
   determinateNix.customSettings = {
+    trusted-users = ["root" "nick" "nickp"];
     eval-cores = 0;
     extra-experimental-features = sharedNix.advancedExperimentalFeatures;
     extra-substituters = sharedNix.caches.substituters;
@@ -45,6 +46,7 @@ in {
       "openhue/cli"
     ];
     brews = [
+      "gemini-cli"
       "postgresql@16"
       "iproute2mac"
       "gromgit/fuse/s3fs-mac"
@@ -69,7 +71,6 @@ in {
       "scrcpy"
     ];
     casks = [
-      "balenaetcher"
       "balenaetcher"
       "macfuse"
       "background-music"
@@ -99,6 +100,38 @@ in {
   };
 
   security.pam.services.sudo_local.touchIdAuth = true;
+
+  networking = {
+    hostName = "Mykolas-MacBook-Pro";
+    localHostName = "Mykolas-MacBook-Pro";
+    computerName = "Mykola's MacBook Pro";
+  };
+
+  launchd.agents."set-dbus-session-bus-address" = {
+    serviceConfig = {
+      Label = "set-dbus-session-bus-address";
+      ProgramArguments = [
+        "/bin/bash"
+        "-c"
+        ''
+          # Ensure dbus session is running
+          launchctl kickstart -k gui/$(id -u)/org.freedesktop.dbus-session 2>/dev/null || true
+          # Wait for the socket to appear (launchctl print gives the real path)
+          for i in $(seq 1 20); do
+            SOCKET=$(launchctl print gui/$(id -u)/org.freedesktop.dbus-session 2>/dev/null \
+              | awk '/path = \/private\/tmp/{print $3}')
+            if [ -n "$SOCKET" ] && [ -S "$SOCKET" ]; then
+              launchctl setenv DBUS_LAUNCHD_SESSION_BUS_SOCKET "$SOCKET"
+              launchctl setenv DBUS_SESSION_BUS_ADDRESS "unix:path=$SOCKET"
+              exit 0
+            fi
+            sleep 1
+          done
+        ''
+      ];
+      RunAtLoad = true;
+    };
+  };
 
   system = {
     primaryUser = "nick";

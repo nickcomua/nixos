@@ -24,6 +24,9 @@
     initContent = lib.mkMerge [
       ''
         # Common shell init
+        if [[ $- == *i* ]]; then
+          eval "$(zoxide init zsh --cmd cd)"
+        fi
         source <(fzf --zsh)
         source <(COMPLETE=zsh jj)
 
@@ -114,7 +117,6 @@
 
   programs.zoxide = {
     enable = true;
-    enableZshIntegration = true;
-    options = ["--cmd cd"];
+    enableZshIntegration = false;
   };
 }

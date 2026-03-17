@@ -63,8 +63,7 @@ in {
       };
     };
 
-    # udev rules for Android devices
-    services.udev.packages = [pkgs.android-udev-rules];
+    # udev rules for Android devices (built into systemd now)
 
     # Enable ADB over network (for emulator access)
     services.udev.extraRules = mkIf cfg.enableADB ''

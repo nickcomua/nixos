@@ -45,10 +45,11 @@ jobs:
         run: nix build .#nixosConfigurations.nixos.config.system.build.toplevel --no-link
 
   build-alta:
-    runs-on: ubuntu-24.04-arm64  # Native ARM64 runner
+    runs-on: ubuntu-latest-8-cores  # Use larger runner with timeout
     needs: check
+    timeout-minutes: 180  # 3 hour timeout for QEMU builds
     steps:
-      - name: Free Disk Space (Ubuntu ARM64)
+      - name: Free Disk Space (Ubuntu)
         uses: jlumbroso/free-disk-space@main
         with:
           android: true
@@ -59,13 +60,18 @@ jobs:
           swap-storage: true
       - uses: actions/checkout@v4
       - uses: DeterminateSystems/nix-installer-action@main
-        # No need for extra-platforms on native ARM64
+        with:
+          extra-conf: "extra-platforms = aarch64-linux"
       - uses: cachix/cachix-action@v16
         with:
           name: nickcomua
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-      - name: Build Alta (aarch64-linux native)
-        run: nix build .#nixosConfigurations.alta.config.system.build.toplevel --no-link
+      - name: Set up QEMU for aarch64 (faster with more cores)
+        run: |
+          sudo apt-get update -q -y
+          sudo apt-get install -q -y qemu-user-static binfmt-support
+      - name: Build Alta (aarch64-linux via QEMU)
+        run: nix build .#nixosConfigurations.alta.config.system.build.toplevel --no-link --max-jobs 8
 
   build-macos:
     runs-on: macos-latest
@@ -96,7 +102,7 @@ jobs:
           git push origin HEAD:stable-nixos --force-with-lease
 
   promote-alta:
-    runs-on: ubuntu-24.04-arm64  # Use ARM64 for consistency
+    runs-on: ubuntu-latest
     needs: build-alta
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
@@ -108,6 +114,40 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git push origin HEAD:stable-alta --force-with-lease
+
+  # Notification job - runs after all builds complete or fail
+  notify:
+    runs-on: ubuntu-latest
+    needs: [build-nixos, build-alta, build-macos]
+    if: always()  # Run even if builds fail
+    steps:
+      - name: Determine CI status
+        id: status
+        run: |
+          if [[ "${{ needs.build-nixos.result }}" == "success" && "${{ needs.build-alta.result }}" == "success" && "${{ needs.build-macos.result }}" == "success" ]]; then
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "message=✅ All builds passed: nixos, alta, macos" >> $GITHUB_OUTPUT
+          else
+            echo "status=failure" >> $GITHUB_OUTPUT
+            echo "message=❌ Build failures: nixos=${{ needs.build-nixos.result }}, alta=${{ needs.build-alta.result }}, macos=${{ needs.build-macos.result }}" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Send webhook notification
+        if: env.WEBHOOK_URL != ''
+        env:
+          WEBHOOK_URL: ${{ secrets.CI_WEBHOOK_URL }}
+        run: |
+          curl -X POST "$WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${{ secrets.CI_WEBHOOK_TOKEN }}" \
+            -d "{
+              \"status\": \"${{ steps.status.outputs.status }}\",
+              \"message\": \"${{ steps.status.outputs.message }}\",
+              \"commit\": \"${{ github.sha }}\",
+              \"branch\": \"${{ github.ref_name }}\",
+              \"run_url\": \"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\",
+              \"timestamp\": \"$(date -Iseconds)\"
+            }" || echo "Webhook notification failed"
 
   promote-darwin:
     runs-on: ubuntu-latest

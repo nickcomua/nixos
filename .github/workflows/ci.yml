@@ -45,10 +45,10 @@ jobs:
         run: nix build .#nixosConfigurations.nixos.config.system.build.toplevel --no-link
 
   build-alta:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm64  # Native ARM64 runner
     needs: check
     steps:
-      - name: Free Disk Space (Ubuntu)
+      - name: Free Disk Space (Ubuntu ARM64)
         uses: jlumbroso/free-disk-space@main
         with:
           android: true
@@ -59,17 +59,12 @@ jobs:
           swap-storage: true
       - uses: actions/checkout@v4
       - uses: DeterminateSystems/nix-installer-action@main
-        with:
-          extra-conf: "extra-platforms = aarch64-linux"
+        # No need for extra-platforms on native ARM64
       - uses: cachix/cachix-action@v16
         with:
           name: nickcomua
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-      - name: Set up QEMU for aarch64
-        run: |
-          sudo apt-get update -q -y
-          sudo apt-get install -q -y qemu-user-static binfmt-support
-      - name: Build Alta (aarch64-linux)
+      - name: Build Alta (aarch64-linux native)
         run: nix build .#nixosConfigurations.alta.config.system.build.toplevel --no-link
 
   build-macos:
@@ -101,7 +96,7 @@ jobs:
           git push origin HEAD:stable-nixos --force-with-lease
 
   promote-alta:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm64  # Use ARM64 for consistency
     needs: build-alta
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:

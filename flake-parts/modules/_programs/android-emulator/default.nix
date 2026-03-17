@@ -66,10 +66,13 @@ in {
       export PATH=$PATH:$ANDROID_HOME/tools:$ANDROID_HOME/tools/bin:$ANDROID_HOME/platform-tools
     '';
 
-    # Create android group and add user to groups needed for development
-    users.groups.android = {};
-    users.users.nick = {
-      extraGroups = ["android" "kvm" "adbusers"];
+    # Configure users and groups for Android development
+    users = {
+      groups.android = {};
+      groups.adbusers = {};
+      users.nick = {
+        extraGroups = ["android" "kvm" "adbusers"];
+      };
     };
 
     # udev rules for Android devices
@@ -85,9 +88,6 @@ in {
       # KVM access for emulator acceleration
       KERNEL=="kvm", GROUP="kvm", MODE="0666"
     '';
-
-    # Create adbusers group for ADB access
-    users.groups.adbusers = {};
 
     # Networking for emulator
     networking.firewall.allowedTCPPorts = [

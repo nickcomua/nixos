@@ -25,7 +25,20 @@ else
     log "Formatting OK"
 fi
 
-# 2. Basic flake evaluation check
+# 2. Lint with statix
+log "Running Nix linter..."
+if command -v statix >/dev/null 2>&1; then
+    if statix check . >/dev/null 2>&1; then
+        log "Linting OK"
+    else
+        warn "Linting issues found - run 'statix check .' for details"
+        log "Continuing anyway (some lint issues may be acceptable)"
+    fi
+else
+    warn "statix not available - skipping lint check"
+fi
+
+# 3. Basic flake evaluation check
 log "Checking core system evaluation..."
 if nix eval .#nixosConfigurations.nixos.config.system.build.toplevel.drvPath >/dev/null 2>&1; then
     log "NixOS system evaluation OK"
@@ -33,7 +46,7 @@ else
     error "NixOS system evaluation failed! This will break builds."
 fi
 
-# 3. Build check (optional, faster)
+# 4. Build check (optional, faster)
 if [[ "${1:-}" == "--build" ]]; then
     log "Testing build (this may take a while)..."
     nix build .#nixosConfigurations.nixos.config.system.build.toplevel --dry-run

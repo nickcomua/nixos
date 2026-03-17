@@ -230,7 +230,7 @@ in {
     horse-browser.enable = true;
     librepods.enable = true;
     whisper-transcribe.enable = true;
-    android-emulator.enable = true;
+    # android-emulator.enable = true;  # Broken - disabling for now
     nix-ld.enable = true;
     hyprland = {
       enable = true;

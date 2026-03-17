@@ -30,17 +30,14 @@ in {
 
     # Android development environment
     environment.systemPackages = with pkgs; [
-      # Android SDK and emulator
-      androidenv.androidPkgs_9_0.platform-tools # ADB, fastboot, etc
-      androidenv.androidPkgs_9_0.emulator # Android emulator
+      # Basic Android tools
+      android-tools # ADB, fastboot, etc
 
       # Additional tools for rooting and development
       scrcpy # Android screen mirroring and control
-      gnirehtet # Reverse tethering over adb
 
       # Development tools
       openjdk17 # Java for Android development
-      gradle # Build tool
 
       # File transfer and networking
       wget
@@ -50,21 +47,12 @@ in {
       # For custom ROM/kernel building if needed
       git
       python3
-
-      # ADB shell and debugging tools
-      android-tools # Alternative ADB implementation
     ];
 
-    # Configure Android SDK environment variables
+    # Basic Android development environment setup
     environment.variables = {
-      ANDROID_HOME = "${pkgs.androidenv.androidPkgs_9_0.androidsdk}/libexec/android-sdk";
-      ANDROID_SDK_ROOT = "${pkgs.androidenv.androidPkgs_9_0.androidsdk}/libexec/android-sdk";
+      # Users can set ANDROID_HOME manually when installing Android Studio
     };
-
-    # Add Android SDK to PATH
-    environment.extraInit = ''
-      export PATH=$PATH:$ANDROID_HOME/tools:$ANDROID_HOME/tools/bin:$ANDROID_HOME/platform-tools
-    '';
 
     # Configure users and groups for Android development
     users = {

@@ -25,12 +25,20 @@ in {
   };
 
   config = mkIf cfg.enable {
+    # Accept Android SDK license
+    nixpkgs.config.android_sdk.accept_license = true;
+
     # Enable KVM for hardware acceleration
     boot.kernelModules = mkIf cfg.enableKVM ["kvm-amd"];
 
     # Android development environment
     environment.systemPackages = with pkgs; [
-      # Basic Android tools
+      # Android SDK and emulator
+      android-studio # Full Android Studio IDE
+      androidenv.androidPkgs.emulator # Android emulator
+      androidenv.androidPkgs.platform-tools # ADB, fastboot, etc
+
+      # Basic Android tools (fallback)
       android-tools # ADB, fastboot, etc
 
       # Additional tools for rooting and development
@@ -49,10 +57,16 @@ in {
       python3
     ];
 
-    # Basic Android development environment setup
+    # Android SDK environment variables
     environment.variables = {
-      # Users can set ANDROID_HOME manually when installing Android Studio
+      ANDROID_HOME = "${pkgs.androidenv.androidPkgs.androidsdk}/libexec/android-sdk";
+      ANDROID_SDK_ROOT = "${pkgs.androidenv.androidPkgs.androidsdk}/libexec/android-sdk";
     };
+
+    # Add Android SDK to PATH
+    environment.extraInit = ''
+      export PATH=$PATH:$ANDROID_HOME/emulator:$ANDROID_HOME/tools:$ANDROID_HOME/tools/bin:$ANDROID_HOME/platform-tools
+    '';
 
     # Configure users and groups for Android development
     users = {

@@ -32,41 +32,43 @@ in {
     boot.kernelModules = mkIf cfg.enableKVM ["kvm-amd"];
 
     # Android development environment
-    environment.systemPackages = with pkgs; [
-      # Android SDK and emulator
-      android-studio # Full Android Studio IDE
-      androidenv.androidPkgs.emulator # Android emulator
-      androidenv.androidPkgs.platform-tools # ADB, fastboot, etc
+    environment = {
+      systemPackages = with pkgs; [
+        # Android SDK and emulator
+        android-studio # Full Android Studio IDE
+        androidenv.androidPkgs.emulator # Android emulator
+        androidenv.androidPkgs.platform-tools # ADB, fastboot, etc
 
-      # Basic Android tools (fallback)
-      android-tools # ADB, fastboot, etc
+        # Basic Android tools (fallback)
+        android-tools # ADB, fastboot, etc
 
-      # Additional tools for rooting and development
-      scrcpy # Android screen mirroring and control
+        # Additional tools for rooting and development
+        scrcpy # Android screen mirroring and control
 
-      # Development tools
-      openjdk17 # Java for Android development
+        # Development tools
+        openjdk17 # Java for Android development
 
-      # File transfer and networking
-      wget
-      curl
-      unzip
+        # File transfer and networking
+        wget
+        curl
+        unzip
 
-      # For custom ROM/kernel building if needed
-      git
-      python3
-    ];
+        # For custom ROM/kernel building if needed
+        git
+        python3
+      ];
 
-    # Android SDK environment variables
-    environment.variables = {
-      ANDROID_HOME = "${pkgs.androidenv.androidPkgs.androidsdk}/libexec/android-sdk";
-      ANDROID_SDK_ROOT = "${pkgs.androidenv.androidPkgs.androidsdk}/libexec/android-sdk";
+      # Android SDK environment variables
+      variables = {
+        ANDROID_HOME = "${pkgs.androidenv.androidPkgs.androidsdk}/libexec/android-sdk";
+        ANDROID_SDK_ROOT = "${pkgs.androidenv.androidPkgs.androidsdk}/libexec/android-sdk";
+      };
+
+      # Add Android SDK to PATH
+      extraInit = ''
+        export PATH=$PATH:$ANDROID_HOME/emulator:$ANDROID_HOME/tools:$ANDROID_HOME/tools/bin:$ANDROID_HOME/platform-tools
+      '';
     };
-
-    # Add Android SDK to PATH
-    environment.extraInit = ''
-      export PATH=$PATH:$ANDROID_HOME/emulator:$ANDROID_HOME/tools:$ANDROID_HOME/tools/bin:$ANDROID_HOME/platform-tools
-    '';
 
     # Configure users and groups for Android development
     users = {

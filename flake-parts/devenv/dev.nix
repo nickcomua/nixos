@@ -133,6 +133,7 @@
   difftastic.enable = true;
 
   cachix = {
+    enable = true;
     pull = ["nickcomua"];
     push = "nickcomua";
   };

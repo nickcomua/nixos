@@ -20,6 +20,7 @@
     sessionVariables = {
       ZSH_DISABLE_COMPFIX = true;
       MAILCHECK = 30;
+      EDITOR = "code --wait";
     };
     initContent = lib.mkMerge [
       ''
@@ -66,6 +67,9 @@
         eval "$(uvx --generate-shell-completion zsh)"
         source <(determinate-nixd completion zsh)
         export PATH=$HOME/.opencode/bin:$PATH
+
+        # Forge shell integration
+        eval "$(forge zsh plugin)"
       '')
     ];
     plugins = [
@@ -88,6 +92,16 @@
           rev = "v0.8.0";
           sha256 = "1lzrn0n4fxfcgg65v0qhnj7wnybybqzs4adz7xsrkgmcsr0ii8b7";
         };
+      }
+      {
+        name = "zsh-autosuggestions";
+        file = "zsh-autosuggestions.zsh";
+        src = "${pkgs.zsh-autosuggestions}/share/zsh-autosuggestions";
+      }
+      {
+        name = "zsh-syntax-highlighting";
+        file = "zsh-syntax-highlighting.zsh";
+        src = "${pkgs.zsh-syntax-highlighting}/share/zsh-syntax-highlighting";
       }
     ];
     oh-my-zsh = {

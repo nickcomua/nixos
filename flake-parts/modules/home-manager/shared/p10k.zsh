@@ -46,6 +46,7 @@
   # last prompt line gets hidden if it would overlap with left prompt.
   typeset -g POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(
     # =========================[ Line #1 ]=========================
+    forge                   # forge AI session info
     status                  # exit code of the last command
     command_execution_time  # duration of the last command
     background_jobs         # presence of background jobs
@@ -1698,6 +1699,20 @@
   # User-defined prompt segments can be customized the same way as built-in segments.
   # typeset -g POWERLEVEL9K_EXAMPLE_FOREGROUND=208
   # typeset -g POWERLEVEL9K_EXAMPLE_VISUAL_IDENTIFIER_EXPANSION='⭐'
+
+  ##################################[ forge: AI session info ]##################################
+  # Shows active Forge AI session model and token usage in the right prompt.
+  # Integrates with p10k instead of using forge's standalone RPROMPT theme.
+  function prompt_forge() {
+    local forge_bin="${_FORGE_BIN:-${FORGE_BIN:-forge}}"
+    [[ -n "$_FORGE_SESSION_MODEL" ]] && local -x FORGE_SESSION__MODEL_ID="$_FORGE_SESSION_MODEL"
+    [[ -n "$_FORGE_SESSION_PROVIDER" ]] && local -x FORGE_SESSION__PROVIDER_ID="$_FORGE_SESSION_PROVIDER"
+    local content
+    content=$(_FORGE_CONVERSATION_ID=$_FORGE_CONVERSATION_ID \
+              _FORGE_ACTIVE_AGENT=$_FORGE_ACTIVE_AGENT \
+              "$forge_bin" zsh rprompt 2>/dev/null)
+    [[ -n "$content" ]] && p10k segment -t "$content"
+  }
 
   # Transient prompt works similarly to the builtin transient_rprompt option. It trims down prompt
   # when accepting a command line. Supported values:

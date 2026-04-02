@@ -92,6 +92,7 @@ in {
       "whisky"
 
       "android-platform-tools"
+      "xquartz"
     ];
     onActivation = {
       cleanup = "zap";

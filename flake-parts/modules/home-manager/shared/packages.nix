@@ -25,6 +25,7 @@
 
     # Network/utils
     rsync
+    rclone
     wget
     curl
     jq

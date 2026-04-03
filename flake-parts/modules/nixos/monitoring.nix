@@ -1,8 +1,27 @@
 # Monitoring stack: Grafana + Prometheus + Loki + Promtail
 # - Prometheus scrapes node_exporter (systemd service states) + comin exporter
 # - Loki ingests journald logs via Promtail
-# - Grafana serves dashboards on port 3000
+# - Grafana available at http://grafana.local via nginx reverse proxy
 {config, ...}: {
+  # Local DNS: grafana.local → 127.0.0.1
+  networking.hosts."127.0.0.1" = ["grafana.local"];
+
+  # Nginx: reverse proxy for .local domains
+  # Listens on all interfaces so other LAN devices (e.g. Mac) can reach it
+  services.nginx = {
+    enable = true;
+    recommendedProxySettings = true;
+    virtualHosts."grafana.local" = {
+      locations."/" = {
+        proxyPass = "http://127.0.0.1:${toString config.services.grafana.settings.server.http_port}";
+        proxyWebsockets = true;
+      };
+    };
+  };
+
+  # Allow HTTP through firewall for LAN access
+  networking.firewall.allowedTCPPorts = [80];
+
   # Prometheus: metrics collection
   services = {
     prometheus = {
@@ -107,7 +126,8 @@
         server = {
           http_addr = "127.0.0.1";
           http_port = 3000;
-          domain = "localhost";
+          domain = "grafana.local";
+          root_url = "http://grafana.local";
         };
         security.secret_key = "SW2YcwTIb9zpOOhoPsMm";
         "auth.anonymous" = {
@@ -136,5 +156,5 @@
       };
     };
   };
-  # No firewall ports needed — Grafana is localhost-only
+  # Port 80 opened in firewall for LAN access to grafana.local
 }

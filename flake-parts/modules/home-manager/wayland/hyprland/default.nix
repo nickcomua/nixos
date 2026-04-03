@@ -264,6 +264,7 @@ in {
       ];
       bindl = [
         ", XF86AudioMute, exec, ${ipc} volume muteOutput"
+        ", XF86AudioMicMute, exec, ${ipc} volume muteInput"
       ];
 
       # move and resize windows with the mouse cursor

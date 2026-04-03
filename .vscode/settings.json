@@ -19,8 +19,17 @@
         "nixos": {
           "expr": "(builtins.getFlake \"/home/nick/.config/nixos\").nixosConfigurations.nixos.options"
         },
+        "darwin": {
+          "expr": "(builtins.getFlake \"/home/nick/.config/nixos\").darwinConfigurations.\"Mykolas-MacBook-Pro\".options"
+        },
         "home-manager": {
           "expr": "(builtins.getFlake \"/home/nick/.config/nixos\").nixosConfigurations.nixos.options.home-manager.users.type.getSubOptions []"
+        },
+        "home-manager-darwin": {
+          "expr": "(builtins.getFlake \"/home/nick/.config/nixos\").darwinConfigurations.\"Mykolas-MacBook-Pro\".options.home-manager.users.type.getSubOptions []"
+        },
+        "flake-parts": {
+          "expr": "let flake = builtins.getFlake \"/home/nick/.config/nixos\"; in flake.debug.options // flake.currentSystem.options"
         }
       }
     }

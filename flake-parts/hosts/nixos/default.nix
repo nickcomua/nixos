@@ -306,6 +306,7 @@ in {
       bluetui
       pavucontrol
       kdePackages.krdp
+      kdePackages.ark
     ];
   };
 

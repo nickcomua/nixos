@@ -127,17 +127,12 @@ in {
     desktopManager.gnome.enable = true;
     printing.enable = true;
 
-    tlp = {
-      enable = true;
-      settings = {
-        CPU_SCALING_GOVERNOR_ON_AC = "performance";
-        CPU_SCALING_GOVERNOR_ON_BAT = "powersave";
-        CPU_ENERGY_PERF_POLICY_ON_AC = "performance";
-        CPU_ENERGY_PERF_POLICY_ON_BAT = "power";
-      };
-    };
+    # power-profiles-daemon is required by Noctalia for power profile controls
+    # https://docs.noctalia.dev/getting-started/nixos/
+    power-profiles-daemon.enable = true;
 
-    power-profiles-daemon.enable = false;
+    # upower is required by Noctalia for battery status
+    upower.enable = true;
     pulseaudio.enable = false;
 
     pipewire = {
@@ -163,6 +158,7 @@ in {
   # Hardware configuration
   hardware.bluetooth = {
     enable = true;
+    powerOnBoot = true; # unblock rfkill so Noctalia can manage bluetooth
     settings = {
       General = {
         DeviceID = "bluetooth:004C:0000:0000";
@@ -240,7 +236,6 @@ in {
       remotePlay.openFirewall = true;
       dedicatedServer.openFirewall = true;
     };
-    ssh.askPassword = "${pkgs.kdePackages.ksshaskpass}/bin/ksshaskpass";
     zsh.enable = true;
     firefox.enable = true;
     seahorse.enable = true;
@@ -270,7 +265,7 @@ in {
   };
 
   virtualisation.docker.enable = true;
-
+  
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 
@@ -279,8 +274,12 @@ in {
     localBinInPath = true;
     variables = {
       XDG_RUNTIME_DIR = "/run/user/$UID";
-      SUDO_ASKPASS = "${pkgs.kdePackages.ksshaskpass}/bin/ksshaskpass";
     };
+    # Fix bracketed paste for bash (prevents ^[[200~ appearing on paste)
+    etc."inputrc".text = ''
+      $include /etc/inputrc.default
+      set enable-bracketed-paste off
+    '';
     systemPackages = with pkgs; [
       vscode
       google-chrome

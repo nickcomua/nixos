@@ -22,6 +22,12 @@
       EDITOR = "code --wait";
     };
     initContent = lib.mkMerge [
+      (lib.mkOrder 100 ''
+        # Fix bracketed paste mode (prevents ^[[200~ appearing on paste)
+        if [[ $- == *i* ]]; then
+          unset zle_bracketed_paste
+        fi
+      '')
       ''
         # Common shell init
         if [[ $- == *i* ]]; then

@@ -10,7 +10,7 @@
 }: {
   # Install aw-watcher-window-hyprland from the flake input
   home.packages = [
-    inputs.aw-watcher-window-hyprland.defaultPackage.${pkgs.system}
+    inputs.aw-watcher-window-hyprland.defaultPackage.${pkgs.stdenv.hostPlatform.system}
   ];
 
   # ActivityWatch systemd service
@@ -46,7 +46,7 @@
 
     Service = {
       ExecStart = "${
-        inputs.aw-watcher-window-hyprland.defaultPackage.${pkgs.system}
+        inputs.aw-watcher-window-hyprland.defaultPackage.${pkgs.stdenv.hostPlatform.system}
       }/bin/aw-watcher-window-hyprland";
       Restart = "on-failure";
       RestartSec = 5;

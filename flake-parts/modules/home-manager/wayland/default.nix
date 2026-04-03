@@ -1,15 +1,13 @@
 {inputs, ...}: {
   imports = [
     inputs.catppuccin-nix.homeModules.catppuccin
-    inputs.vicinae.homeManagerModules.default
     ./options.nix
     ./hyprland
-    ./hyprpanel
+    ./noctalia
     ./hyprlock
     ./hypridle
     ./hyprpaper
     ./satty
-    ./vicinae
   ];
 
   # Configure catppuccin with sensible defaults

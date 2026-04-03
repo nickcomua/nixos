@@ -133,14 +133,11 @@ flake-parts/
         │   ├── default.nix
         │   ├── options.nix  # Centralized wayland option definitions
         │   ├── hyprland/
-        │   ├── hyprpanel/
+        │   ├── noctalia/    # Noctalia desktop shell (bar, launcher, control center)
         │   ├── hyprlock/
         │   ├── hypridle/
         │   ├── hyprpaper/
-        │   ├── ags/
-        │   ├── anyrun/
-        │   ├── satty/
-        │   └── vicinae/
+        │   └── satty/
         └── services/        # User services (systemd --user)
             └── activitywatch/
 ```
@@ -217,7 +214,6 @@ The `wayland` option namespace (defined in `modules/home-manager/wayland/options
 - `wayland.hyprland.autostart` - Programs to launch on startup
 - `wayland.hypridle.listener` - Idle timeout actions
 - `wayland.hyprlock.monitor` / `wayland.hyprlock.auth.*` - Lock screen settings
-- `wayland.hyprpanel.modules.right` - Panel module ordering
 - `wayland.cursor.size`, `wayland.font.text.size` - UI sizing
 
 This allows host-specific overrides in `hosts/nixos/default.nix` under `home-manager.users.nick`.

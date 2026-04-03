@@ -12,58 +12,28 @@
   }: "[workspace ${workspace} silent] ${program}";
   mkAutostartList = entries: (map mkAutostartEntry entries);
 
-  brightnessUp = pkgs.writeShellScript "brightness-up" ''
-    ACTIVE_MONITOR=$(${pkgs.hyprland}/bin/hyprctl monitors -j | ${pkgs.jq}/bin/jq -r '.[] | select(.focused == true) | .name')
-    # For laptop displays (eDP-*), use brightnessctl
-    if echo "$ACTIVE_MONITOR" | ${pkgs.gnugrep}/bin/grep -qE '^eDP'; then
-      ${pkgs.brightnessctl}/bin/brightnessctl set 10%+
-    else
-      # For external monitors, use DDC/CI
-      # Based on ddcutil detect, Display 1 is the Samsung monitor (HDMI-A-1)
-      # Try Display 1 first, then fallback to trying all displays
-      ${pkgs.ddcutil}/bin/ddcutil -d 1 setvcp 10 + 10 2>/dev/null || \
-      # If Display 1 fails, try other displays
-      for DISPLAY_NUM in 2 3 4; do
-        ${pkgs.ddcutil}/bin/ddcutil -d "$DISPLAY_NUM" setvcp 10 + 10 2>/dev/null && break
-      done
-    fi
-  '';
-
-  brightnessDown = pkgs.writeShellScript "brightness-down" ''
-    ACTIVE_MONITOR=$(${pkgs.hyprland}/bin/hyprctl monitors -j | ${pkgs.jq}/bin/jq -r '.[] | select(.focused == true) | .name')
-    # For laptop displays (eDP-*), use brightnessctl
-    if echo "$ACTIVE_MONITOR" | ${pkgs.gnugrep}/bin/grep -qE '^eDP'; then
-      ${pkgs.brightnessctl}/bin/brightnessctl set 10%-
-    else
-      # For external monitors, use DDC/CI
-      # Based on ddcutil detect, Display 1 is the Samsung monitor (HDMI-A-1)
-      # Try Display 1 first, then fallback to trying all displays
-      ${pkgs.ddcutil}/bin/ddcutil -d 1 setvcp 10 - 10 2>/dev/null || \
-      # If Display 1 fails, try other displays
-      for DISPLAY_NUM in 2 3 4; do
-        ${pkgs.ddcutil}/bin/ddcutil -d "$DISPLAY_NUM" setvcp 10 - 10 2>/dev/null && break
-      done
-    fi
-  '';
+  ipc = "noctalia-shell ipc call";
 in {
   home = {
     packages = with pkgs; [
       hyprcursor
+      cliphist # clipboard history manager for Wayland
+      wl-clipboard # wl-copy/wl-paste for Wayland clipboard
       wl-clip-persist # clipboard persistence for Wayland
       wtype # Type text via Wayland
       yazi # Terminal file manager
       obsidian # Note-taking app
       ddcutil # DDC/CI control for external monitors
       btop # System monitor
+      hyprshot # Screenshot utility for Hyprland
     ];
     sessionVariables = {
       ELECTRON_OZONE_PLATFORM_HINT = "wayland"; # helps with electron apps like 1password
     };
   };
 
-  services = {
-    hyprpolkitagent.enable = true;
-  };
+  # Polkit agent is now handled by Noctalia's polkit-agent plugin
+  # services.hyprpolkitagent.enable = true;
 
   xdg.configFile."electron-flags.conf" = {
     text = ''
@@ -121,32 +91,29 @@ in {
 
       general = {
         resize_on_border = true;
-        gaps_in = 3;
-        gaps_out = 3;
+        gaps_in = 5;
+        gaps_out = 10;
         border_size = 2;
-        # rotating gradeint border!
+        # rotating gradient border!
         "col.active_border" = "rgba(88c0d0ff) rgba(b48eadff) rgba(ebcb8bff) rgba(a3be8cff) 45deg";
         "col.inactive_border" = "0xff434c5e";
       };
       decoration = {
+        rounding = 20;
+        rounding_power = 2;
+
         shadow = {
           enabled = true;
-          range = 20;
+          range = 4;
           render_power = 3;
-          color = "0xee1a1a1a";
-          color_inactive = "0xee1a1a1a";
+          color = "rgba(1a1a1aee)";
         };
-        rounding = 10;
 
         blur = {
           enabled = true;
-          size = 5; # minimum 1
-          passes = 3; # minimum 1, more passes = more resource intensive.
-          # Your blur "amount" is blur_size * blur_passes, but high blur_size (over around 5-ish) will produce artifacts.
-          # if you want heavy blur, you need to up the blur_passes.
-          # the more passes, the more you can up the blur_size without noticing artifacts.
-          noise = 0.05;
-          xray = false;
+          size = 3;
+          passes = 2;
+          vibrancy = 0.1696;
         };
       };
       group = {
@@ -180,18 +147,19 @@ in {
         ];
       };
       layerrule = [
+        # Noctalia blur support
+        # https://docs.noctalia.dev/getting-started/compositor-settings/hyprland/
+        "blur true, match:namespace noctalia-background-.*$"
+        "blur_popups true, match:namespace noctalia-background-.*$"
+        "ignore_alpha 0.5, match:namespace noctalia-background-.*$"
+
         # eww
-        "blur on, match:namespace gtk-layer-shell"
-        "ignore_alpha 0, match:namespace gtk-layer-shell" # remove blurred surface around borders
+        "blur true, match:namespace gtk-layer-shell"
+        "ignore_alpha 0, match:namespace gtk-layer-shell"
 
-        # use `hyprctl layers` to get layer namespaces
-        "blur on, match:namespace notifications"
-        "ignore_alpha 0, match:namespace notifications" # remove blurred surface around borders
-
-        # vicinae
-        "blur on, match:namespace (vicinae)"
-        "dim_around on, match:namespace vicinae"
-        "ignore_alpha 0, match:namespace (vicinae)"
+        # notifications
+        "blur true, match:namespace notifications"
+        "ignore_alpha 0, match:namespace notifications"
       ];
       env = [
         "WLR_NO_HARDWARE_CURSORS,1"
@@ -208,6 +176,11 @@ in {
           # import env vars set with home.sessionVariables
           "systemctl --user import-environment DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP ELECTRON_OZONE_PLATFORM_HINT"
           "wl-clip-persist --clipboard regular"
+          "${pkgs.wl-clipboard}/bin/wl-paste --watch ${pkgs.cliphist}/bin/cliphist store"
+          # Start Noctalia desktop shell
+          "noctalia-shell"
+          # KDE Connect indicator (tray icon + daemon)
+          "kdeconnect-indicator"
         ]
         ++ mkAutostartList cfg.hyprland.autostart;
 
@@ -243,16 +216,20 @@ in {
         # starting applications
         "SUPER,RETURN,exec,${pkgs.ghostty}/bin/ghostty"
         "SUPER,E,exec,${pkgs.ghostty}/bin/ghostty -e ${pkgs.yazi}/bin/yazi"
-        # application launcher
-        "SUPER,space,exec,${pkgs.vicinae}/bin/vicinae toggle"
-        "SUPER,v,exec,${pkgs.vicinae}/bin/vicinae deeplink vicinae://extensions/vicinae/clipboard/history"
+
+        # Noctalia shell controls
+        "SUPER,space,exec,${ipc} launcher toggle"
+        "SUPER,V,exec,${ipc} launcher clipboard"
+        "SUPER,S,exec,${ipc} controlCenter toggle"
+        "SUPER,comma,exec,${ipc} settings toggle"
+
         # open obsidian daily note
         "SUPER,B,exec, [float; minsize 500 500] ${pkgs.obsidian}/bin/obsidian obsidian://daily?vault=The%20Well"
 
         # window management
         "SUPER,Q,killactive"
         #"SUPER_SHIFT,M,exit"
-        "SUPER,S,togglefloating"
+        "SUPER,T,togglefloating"
         "SUPER,F,fullscreen"
         # move the active window to the next position
         "SUPER,N,swapnext"
@@ -268,19 +245,6 @@ in {
         ''SHIFT,Print,exec,${pkgs.grim}/bin/grim -g "$(${pkgs.slurp}/bin/slurp)" - | ${pkgs.wl-clipboard}/bin/wl-copy''
         "CTRL_SHIFT,Print,exec,${pkgs.grim}/bin/grim - | ${pkgs.satty}/bin/satty --filename -"
 
-        # brightness control (active screen)
-        ", XF86MonBrightnessUp,     exec, ${brightnessUp}"
-        ", XF86MonBrightnessDown,   exec, ${brightnessDown}"
-
-        # volume control (for pipewire / wireplumber)
-        ", XF86AudioMute, exec, ${pkgs.wireplumber}/bin/wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
-        ", XF86AudioRaiseVolume, exec, ${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_AUDIO_SINK@ 10%+"
-        ", XF86AudioLowerVolume, exec, ${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_AUDIO_SINK@ 10%-"
-
-        # disable notifications
-        # TODO: find how to do it with hyprpanel
-        # "SHIFT_SUPER,N,exec,makoctl mode -t do-not-disturb"
-
         # screen locking
         "SUPER,L,exec,hyprlock"
         # hyprland management
@@ -288,6 +252,17 @@ in {
 
         # system monitor
         "CTRL_SHIFT,escape,exec,${pkgs.ghostty}/bin/ghostty -e ${pkgs.btop}/bin/btop"
+      ];
+
+      # Noctalia media/brightness keys (bindel/bindl for repeat/lock support)
+      bindel = [
+        ", XF86AudioRaiseVolume, exec, ${ipc} volume increase"
+        ", XF86AudioLowerVolume, exec, ${ipc} volume decrease"
+        ", XF86MonBrightnessUp, exec, ${ipc} brightness increase"
+        ", XF86MonBrightnessDown, exec, ${ipc} brightness decrease"
+      ];
+      bindl = [
+        ", XF86AudioMute, exec, ${ipc} volume muteOutput"
       ];
 
       # move and resize windows with the mouse cursor

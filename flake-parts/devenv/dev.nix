@@ -18,8 +18,7 @@
     (lib.optional (treefmt-wrapper != null) treefmt-wrapper)
     ++ [
       # -- NIX UTILS --
-      nil # Yet another language server for Nix
-      nixd
+      nixd # Nix language server with full flake & options support
       statix # Lints and suggestions for the nix programming language
       deadnix # Find and remove unused code in .nix source files
       nix-output-monitor # Processes output of Nix commands to show helpful and pretty information
@@ -96,7 +95,7 @@
         then treefmt-wrapper
         else pkgs.treefmt;
 
-      nil.enable = true; # Nix Language server, an incremental analysis assistant for writing in Nix.
+      nil.enable = false;
       markdownlint.enable = true; # Markdown lint tool
       # typos.enable = true; # Source code spell checker
 

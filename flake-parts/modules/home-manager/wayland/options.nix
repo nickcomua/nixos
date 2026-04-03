@@ -118,32 +118,5 @@
         description = "List of idle timeout listeners";
       };
     };
-
-    hyprpanel = {
-      modules = {
-        right = lib.mkOption {
-          type = lib.types.listOf lib.types.str;
-          default = [
-            "network"
-            "bluetooth"
-            "battery"
-            "systray"
-            "clock"
-            "power"
-          ];
-          description = "Modules to show on the right side of the panel";
-        };
-
-        config = {
-          cpuTemperature = {
-            sensorPath = lib.mkOption {
-              type = lib.types.str;
-              default = "/sys/class/thermal/thermal_zone0/temp";
-              description = "Path to CPU temperature sensor";
-            };
-          };
-        };
-      };
-    };
   };
 }

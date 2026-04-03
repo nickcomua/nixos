@@ -9,6 +9,7 @@
       "https://devenv.cachix.org"
       "https://cache.garnix.io"
       "https://nickcomua.cachix.org"
+      "https://noctalia.cachix.org"
     ];
 
     trustedPublicKeys = [
@@ -17,6 +18,7 @@
       "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw="
       "cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g="
       "nickcomua.cachix.org-1:stcsazuAJ0uhVu6i4yXinhDenHEwKngOtystEXf++so="
+      "noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4="
     ];
   };
 

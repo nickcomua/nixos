@@ -7,7 +7,7 @@
     nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/0.1";
     flake-parts = {
       url = "https://flakehub.com/f/hercules-ci/flake-parts/0";
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs-lib.follows = "nixpkgs";
     };
     # --- DARWIN ---
     nix-darwin = {
@@ -16,7 +16,6 @@
     };
     nix-homebrew = {
       url = "github:zhaofengli-wip/nix-homebrew";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
     homebrew-core = {
       url = "github:homebrew/homebrew-core";
@@ -46,7 +45,6 @@
     };
     nix-dokploy = {
       url = "github:el-kurto/nix-dokploy";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     # --- SHARED ---
@@ -76,8 +74,8 @@
       url = "github:catppuccin/nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    vicinae = {
-      url = "github:vicinaehq/vicinae";
+    noctalia = {
+      url = "github:noctalia-dev/noctalia-shell";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     librepods = {
@@ -100,6 +98,7 @@
       "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw="
       "cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g="
       "nickcomua.cachix.org-1:stcsazuAJ0uhVu6i4yXinhDenHEwKngOtystEXf++so="
+      "noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4="
     ];
     extra-substituters = [
       "https://cache.nixos.org"
@@ -107,6 +106,7 @@
       "https://devenv.cachix.org"
       "https://cache.garnix.io"
       "https://nickcomua.cachix.org"
+      "https://noctalia.cachix.org"
     ];
     extra-experimental-features = [
       "nix-command"

@@ -50,6 +50,8 @@
   '';
 
   enterTest = ''
+    # Verify formatting
+    nix fmt -- --check .
     # Verify flake check passes
     nix flake check
   '';

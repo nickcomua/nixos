@@ -67,10 +67,16 @@
       fsType = "apfs";
       options = ["nofail"];
     };
+
+    "/swap" = {
+      device = "/dev/disk/by-uuid/07939a85-8044-4996-a897-fc94f5ccbe23";
+      fsType = "btrfs";
+      options = ["subvol=@swap"];
+    };
   };
 
   swapDevices = [
-    {device = "/dev/disk/by-uuid/4af6cab7-b974-4df4-8839-d38c38a26077";}
+    {device = "/swap/swapfile";}
   ];
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";

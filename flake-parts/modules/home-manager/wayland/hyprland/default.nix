@@ -176,7 +176,7 @@ in {
           # import env vars set with home.sessionVariables
           "systemctl --user import-environment DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP ELECTRON_OZONE_PLATFORM_HINT"
           "wl-clip-persist --clipboard regular"
-          "${pkgs.wl-clipboard}/bin/wl-paste --watch ${pkgs.cliphist}/bin/cliphist store"
+          # Clipboard watcher is handled by Noctalia (clipboardWatchTextCommand/clipboardWatchImageCommand)
           # Start Noctalia desktop shell
           "noctalia-shell"
           # KDE Connect indicator (tray icon + daemon)
@@ -250,8 +250,9 @@ in {
         # hyprland management
         "SUPER,R,exec,${pkgs.hyprland}/bin/hyprctl reload"
 
-        # system monitor
-        "CTRL_SHIFT,escape,exec,${pkgs.ghostty}/bin/ghostty -e ${pkgs.btop}/bin/btop"
+        # system monitor (SUPER+Escape to avoid conflict with Noctalia clipboard
+        # paste which uses wtype Ctrl+Shift+V and can trigger Ctrl+Shift keybinds)
+        "SUPER,escape,exec,${pkgs.ghostty}/bin/ghostty -e ${pkgs.btop}/bin/btop"
       ];
 
       # Noctalia media/brightness keys (bindel/bindl for repeat/lock support)

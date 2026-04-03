@@ -310,6 +310,7 @@ in {
       pavucontrol
       kdePackages.krdp
       kdePackages.ark
+      kdePackages.partitionmanager
     ];
   };
 

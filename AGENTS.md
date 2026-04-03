@@ -109,7 +109,6 @@ flake-parts/
 └── modules/
     ├── _shared-nix.nix      # Shared Nix cache/substituter settings (excluded from auto-load)
     ├── _programs/           # Program modules (excluded from auto-load)
-    │   ├── android-emulator/
     │   ├── horse-browser/
     │   ├── librepods/
     │   └── whisper-transcribe/

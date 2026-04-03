@@ -14,7 +14,6 @@
       c = "clear";
       h = "history";
       da = "direnv allow";
-      gg = "~/.cargo/bin/gg";
       rm = "echo 'Use rip to delete files'";
     };
     sessionVariables = {

@@ -45,9 +45,8 @@ jobs:
         run: nix build .#nixosConfigurations.nixos.config.system.build.toplevel --no-link
 
   build-alta:
-    runs-on: ubuntu-latest-8-cores  # Use larger runner with timeout
+    runs-on: ubuntu-24.04-arm
     needs: check
-    timeout-minutes: 180  # 3 hour timeout for QEMU builds
     steps:
       - name: Free Disk Space (Ubuntu)
         uses: jlumbroso/free-disk-space@main
@@ -60,17 +59,11 @@ jobs:
           swap-storage: true
       - uses: actions/checkout@v4
       - uses: DeterminateSystems/nix-installer-action@main
-        with:
-          extra-conf: "extra-platforms = aarch64-linux"
       - uses: cachix/cachix-action@v16
         with:
           name: nickcomua
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-      - name: Set up QEMU for aarch64 (faster with more cores)
-        run: |
-          sudo apt-get update -q -y
-          sudo apt-get install -q -y qemu-user-static binfmt-support
-      - name: Build Alta (aarch64-linux via QEMU)
+      - name: Build Alta
         run: nix build .#nixosConfigurations.alta.config.system.build.toplevel --no-link --max-jobs 8
 
   build-macos:

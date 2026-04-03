@@ -18,7 +18,6 @@ in {
     ../../modules/_programs/horse-browser
     ../../modules/_programs/librepods
     ../../modules/_programs/whisper-transcribe
-    ../../modules/_programs/android-emulator
   ];
 
   # Sops secrets configuration
@@ -230,7 +229,6 @@ in {
     horse-browser.enable = true;
     librepods.enable = true;
     whisper-transcribe.enable = true;
-    android-emulator.enable = true;
     nix-ld.enable = true;
     hyprland = {
       enable = true;

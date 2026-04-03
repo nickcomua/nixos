@@ -89,6 +89,11 @@ in {
         workspace_swipe_touch = "yes";
       };
 
+      # 3-finger left/right swipe to switch workspaces
+      gesture = [
+        "3, horizontal, workspace"
+      ];
+
       general = {
         resize_on_border = true;
         gaps_in = 5;

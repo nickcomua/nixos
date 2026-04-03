@@ -49,6 +49,11 @@
     echo ""; echo -e "\e[1;37;42mWelcome to the nixos devshell!\e[0m"; echo ""
   '';
 
+  enterTest = ''
+    # Verify flake check passes
+    nix flake check
+  '';
+
   # ---------------
   # --- SCRIPTS ---
   # ---------------
@@ -97,6 +102,7 @@
 
       nil.enable = false;
       markdownlint.enable = true; # Markdown lint tool
+      markdownlint.package = pkgs.markdownlint-cli; # Override: nodePackages removed from nixpkgs
       # typos.enable = true; # Source code spell checker
 
       # actionlint.enable = true; # GitHub workflows linting

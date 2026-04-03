@@ -276,7 +276,11 @@ in {
 
   # Environment configuration
   environment = {
-    variables.XDG_RUNTIME_DIR = "/run/user/$UID";
+    localBinInPath = true;
+    variables = {
+      XDG_RUNTIME_DIR = "/run/user/$UID";
+      SUDO_ASKPASS = "${pkgs.kdePackages.ksshaskpass}/bin/ksshaskpass";
+    };
     systemPackages = with pkgs; [
       vscode
       google-chrome

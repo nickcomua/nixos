@@ -39,6 +39,9 @@
         # kubectl (if available)
         command -v kubectl &>/dev/null && source <(kubectl completion zsh)
 
+        # Forge shell integration
+        command -v forge &>/dev/null && eval "$(forge zsh plugin)"
+
         # Platform-specific reload-nix command
         reload-nix() {
           if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -66,9 +69,6 @@
         eval "$(uvx --generate-shell-completion zsh)"
         source <(determinate-nixd completion zsh)
         export PATH=$HOME/.opencode/bin:$PATH
-
-        # Forge shell integration
-        eval "$(forge zsh plugin)"
       '')
     ];
     plugins = [

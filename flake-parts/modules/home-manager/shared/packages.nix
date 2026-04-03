@@ -30,6 +30,9 @@
     curl
     jq
 
+    # Calculator
+    libqalculate
+
     # Modern replacements
     rip2
     tlrc

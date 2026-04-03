@@ -15,6 +15,7 @@
     # Or: Open Settings Panel -> General -> Copy Settings
     settings = builtins.fromJSON (builtins.readFile ./settings.json);
     # Plugins config: sources, states (enabled plugins), version
+    # smart-calculator plugin: https://github.com/nickcomua/noctalia-smart-calculator
     plugins = builtins.fromJSON (builtins.readFile ./plugins.json);
   };
 }

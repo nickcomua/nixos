@@ -185,20 +185,6 @@ in {
       };
     };
 
-    lenovo-conservation-mode = {
-      description = "Set Lenovo IdeaPad battery conservation mode";
-      wantedBy = ["sysinit.target"];
-      after = ["systemd-modules-load.service"];
-      serviceConfig = {
-        Type = "oneshot";
-        RemainAfterExit = true;
-      };
-      script = ''
-        # 0 = charge to 100%, 1 = conservation mode (~60%)
-        echo 1 > /sys/bus/platform/drivers/ideapad_acpi/VPC2004:00/conservation_mode
-      '';
-    };
-
     fix-i2c-permissions = {
       description = "Fix I2C device permissions for ddcutil";
       wantedBy = ["multi-user.target"];

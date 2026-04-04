@@ -110,6 +110,12 @@
           "showPowerProfiles": false
         },
         {
+          "defaultSettings": {
+            "preservationMode": 0
+          },
+          "id": "plugin:ideapad-battery-health"
+        },
+        {
           "displayMode": "onhover",
           "iconColor": "none",
           "id": "Volume",
@@ -124,6 +130,9 @@
           "textColor": "none"
         },
         {
+          "defaultSettings": {
+            "mode": "region"
+          },
           "id": "plugin:screenshot"
         },
         {
@@ -359,9 +368,6 @@
         },
         {
           "id": "Bluetooth"
-        },
-        {
-          "id": "WallpaperSelector"
         },
         {
           "id": "NoctaliaPerformance"

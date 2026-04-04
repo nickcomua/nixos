@@ -27,6 +27,10 @@
     "smart-calculator": {
       "enabled": true,
       "sourceUrl": "https://github.com/nickcomua/noctalia-smart-calculator"
+    },
+    "ideapad-battery-health": {
+      "enabled": true,
+      "sourceUrl": "https://github.com/noctalia-dev/noctalia-plugins"
     }
   },
   "version": 2

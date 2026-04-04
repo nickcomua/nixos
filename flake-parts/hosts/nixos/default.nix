@@ -246,7 +246,6 @@ in {
 
   # Enable home-manager for user
   home-manager = {
-    backupFileExtension = "bak";
     users.nick = import ./nick.nix;
   };
 

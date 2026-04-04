@@ -1,0 +1,16 @@
+# Markdownlint configuration
+# MD013 - Line length: disabled, impractical for documentation with URLs and nix paths
+MD013: false
+# MD024 - Multiple headings with the same content: allow in different sections
+MD024:
+  siblings_only: true
+# MD033 - Inline HTML: allow
+MD033: false
+# MD034 - Bare URLs: allow
+MD034: false
+# MD036 - Emphasis as heading: allow
+MD036: false
+# MD040 - Fenced code language: disabled, plain code blocks are fine for directory trees
+MD040: false
+# MD060 - Table column style: disabled
+MD060: false

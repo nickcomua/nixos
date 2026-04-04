@@ -43,6 +43,7 @@ nix fmt
 ```
 
 ### Development
+
 ```bash
 # Enter devenv shell (defined in flake-parts/devenv)
 nix develop
@@ -81,7 +82,7 @@ This means you can organize modules arbitrarily and they'll be discovered automa
 
 ### Directory Structure
 
-```
+```text
 flake-parts/
 ├── _bootstrap.nix           # Module loading system (not auto-imported due to _ prefix)
 ├── systems.nix              # Supported systems: x86_64-linux, aarch64-linux, aarch64-darwin
@@ -160,6 +161,7 @@ Uses **nix-darwin integration mode**:
 1. `hosts/default.nix` includes `home-manager.darwinModules.home-manager` (always, no `withHomeManager` flag)
 2. `sharedModules` only includes `inputs.sops-nix.homeManagerModules.sops` — **homeModules are NOT auto-loaded on darwin**
 3. Each user's home-manager config is loaded individually via the `users` parameter in `mkDarwinHost`:
+
    ```nix
    home-manager.users.${user} = import ./darwin/${hostName}/${user}.nix
    ```
@@ -223,34 +225,38 @@ This allows host-specific overrides in `hosts/nixos/default.nix` under `home-man
 ### Adding a New Flake Input
 
 1. Add to `flake.nix` inputs section:
-```nix
-my-package = {
-  url = "github:owner/repo";
-  inputs.nixpkgs.follows = "nixpkgs";
-};
-```
+
+   ```nix
+   my-package = {
+     url = "github:owner/repo";
+     inputs.nixpkgs.follows = "nixpkgs";
+   };
+   ```
 
 2. Access in modules via `inputs.my-package`
 
 3. Update the lock file:
-```bash
-nix flake update my-package
-```
+
+   ```bash
+   nix flake update my-package
+   ```
 
 ### Creating a New Home-Manager Module
 
 1. Create directory: `flake-parts/modules/home-manager/my-feature/`
 2. Create `default.nix` with appropriate function signature (see above)
+
 3. Register in `flake-parts/modules/home-manager/default.nix`:
-```nix
-config.flake.homeModules = {
-  # ... existing modules
-  # If the module needs flake context (self/inputs), use importApply:
-  my-feature = importApply ./my-feature { inherit localFlake inputs; };
-  # Otherwise, use a direct path:
-  my-feature = ./my-feature;
-};
-```
+
+   ```nix
+   config.flake.homeModules = {
+     # ... existing modules
+     # If the module needs flake context (self/inputs), use importApply:
+     my-feature = importApply ./my-feature { inherit localFlake inputs; };
+     # Otherwise, use a direct path:
+     my-feature = ./my-feature;
+   };
+   ```
 
 The module will be automatically loaded for all NixOS home-manager users. For darwin users, it must be explicitly imported in the user's home config file.
 
@@ -313,17 +319,19 @@ sops updatekeys secrets.yaml
 ### Adding New Secrets
 
 1. Add the secret to `secrets.yaml`:
-```bash
-sops secrets.yaml
-# Add: my-new-secret: "secret-value"
-```
 
-2. Reference in NixOS config (`flake-parts/hosts/nixos/default.nix`):
-```nix
-sops.secrets."my-new-secret" = {};
-```
+   ```bash
+   sops secrets.yaml
+   # Add: my-new-secret: "secret-value"
+   ```
 
-3. Use in services via `config.sops.secrets."my-new-secret".path`
+1. Reference in NixOS config (`flake-parts/hosts/nixos/default.nix`):
+
+   ```nix
+   sops.secrets."my-new-secret" = {};
+   ```
+
+1. Use in services via `config.sops.secrets."my-new-secret".path`
 
 ### Build-Time vs Runtime Secrets
 

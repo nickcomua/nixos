@@ -22,7 +22,7 @@
       statix # Lints and suggestions for the nix programming language
       deadnix # Find and remove unused code in .nix source files
       nix-output-monitor # Processes output of Nix commands to show helpful and pretty information
-      nixfmt-rfc-style # An opinionated formatter for Nix
+      nixfmt # An opinionated formatter for Nix
       nixfmt-tree
       # NOTE Choose a different formatter if you'd like to
       # nixfmt # An opinionated formatter for Nix
@@ -49,12 +49,16 @@
     echo ""; echo -e "\e[1;37;42mWelcome to the nixos devshell!\e[0m"; echo ""
   '';
 
-  enterTest = ''
-    # Verify formatting
-    nix fmt -- --check .
-    # Verify flake check passes
-    nix flake check
-  '';
+  tasks = {
+    "nix:fmt-check" = {
+      exec = "nix fmt . -- --check";
+      before = ["devenv:enterTest"];
+    };
+    "nix:flake-check" = {
+      exec = "nix flake check";
+      before = ["devenv:enterTest"];
+    };
+  };
 
   # ---------------
   # --- SCRIPTS ---

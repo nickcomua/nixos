@@ -114,22 +114,9 @@
       enable = true;
       plugins =
         [
-          "git"
           "git-auto-fetch"
-          "docker"
-          "python"
-          "yarn"
-          "jj"
-          "npm"
-          "fnm"
-          "bun"
-          "ssh"
-          "man"
-          "tldr"
-          "sudo"
           "fzf"
           "direnv"
-          "kubectl"
         ]
         ++ lib.optionals pkgs.stdenv.isDarwin ["macos"];
     };

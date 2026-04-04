@@ -41,6 +41,7 @@ git push
 ## Module Development
 
 When creating new modules in `flake-parts/modules/`:
+
 - Test with `nix flake check` after each change
 - Ensure paths in module exports are correct
 - Verify both NixOS and home-manager modules load properly

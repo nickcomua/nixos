@@ -80,6 +80,7 @@ Home-manager modules are registered in `modules/home-manager/default.nix` and lo
 ## Key Features
 
 ### Wayland/Hyprland
+
 - Comprehensive Hyprland configuration with multi-monitor support
 - Adaptive brightness control (laptop + external DDC/CI monitors)
 - Hyprpanel, Hyprlock, Hypridle, Hyprpaper integration
@@ -87,16 +88,19 @@ Home-manager modules are registered in `modules/home-manager/default.nix` and lo
 - Satty screenshot annotation
 
 ### Cross-Platform
+
 - Shared zsh configuration with platform-specific extensions
 - Common packages across all systems
 - Clawdbot Telegram integration (macOS + NixOS)
 
 ### Hardware Support
+
 - Lenovo IdeaPad battery conservation mode
 - I2C/DDC-CI for external monitor control
 - Bluetooth with Apple DeviceID for AirPods
 
 ### Services
+
 - ActivityWatch time tracking
 - MinIO object storage
 - Steam with remote play
@@ -117,6 +121,7 @@ sops updatekeys secrets.yaml
 ```
 
 Files:
+
 - `secrets.yaml` - Encrypted secrets (safe to commit)
 - `.sops.yaml` - Sops config with public keys
 - `~/.config/sops/age/keys.txt` - Private key (never commit)
@@ -155,6 +160,7 @@ Pre-commit hooks are configured for: treefmt, nil, markdownlint, editorconfig-ch
 
 1. Create `flake-parts/modules/home-manager/my-feature/default.nix`
 2. Use two-layer function signature for `importApply`:
+
    ```nix
    { localFlake, inputs, ... }:
    { config, lib, pkgs, ... }:
@@ -162,7 +168,9 @@ Pre-commit hooks are configured for: treefmt, nil, markdownlint, editorconfig-ch
      # Module content
    }
    ```
+
 3. Register in `modules/home-manager/default.nix`:
+
    ```nix
    my-feature = importApply ./my-feature { inherit localFlake inputs; };
    ```

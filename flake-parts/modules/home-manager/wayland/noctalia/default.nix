@@ -6,12 +6,11 @@
   lib,
   config,
   ...
-}:
-let
-  pluginsJson = pkgs.writeText "noctalia-plugins.json"
+}: let
+  pluginsJson =
+    pkgs.writeText "noctalia-plugins.json"
     (builtins.toJSON (builtins.fromJSON (builtins.readFile ./plugins.json)));
-in
-{
+in {
   imports = [
     inputs.noctalia.homeModules.default
   ];
@@ -29,7 +28,7 @@ in
 
   # Seed plugins.json as a mutable file so Noctalia can manage plugin
   # downloads/updates from custom repos at runtime. Only written if missing.
-  home.activation.noctalia-plugins = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+  home.activation.noctalia-plugins = lib.hm.dag.entryAfter ["writeBoundary"] ''
     pluginsFile="${config.xdg.configHome}/noctalia/plugins.json"
     if [ ! -f "$pluginsFile" ] || [ -L "$pluginsFile" ]; then
       rm -f "$pluginsFile"

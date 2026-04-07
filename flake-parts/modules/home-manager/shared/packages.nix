@@ -36,6 +36,7 @@
     # Modern replacements
     rip2
     tlrc
+    lsd
 
     # Kubernetes (optional, usually wanted everywhere)
     kubectl

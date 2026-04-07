@@ -58,8 +58,8 @@ in {
       "automake"
       {
         name = "cliproxyapi";
-        start_service = true;
-        restart_service = true;
+        start_service = false;
+        restart_service = "changed";
       }
       "dbus"
       "gdal"

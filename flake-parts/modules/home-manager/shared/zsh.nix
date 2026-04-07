@@ -8,9 +8,10 @@
   programs.zsh = {
     enable = true;
     shellAliases = {
-      ll = "ls -l";
-      la = "ls -la";
-      l = "ls -la";
+      ls = "lsd";
+      ll = "lsd -l";
+      la = "lsd -la";
+      l = "lsd -la";
       c = "clear";
       h = "history";
       da = "direnv allow";

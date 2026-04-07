@@ -1,6 +1,6 @@
 # macOS monitoring stack: Grafana + Prometheus + Loki + Promtail
 # Services run as launchd daemons (root-level), all bound to localhost
-# Grafana available at http://grafana.local via /etc/hosts
+# Grafana available at http://grafana.localhost (browsers resolve .localhost natively)
 {
   pkgs,
   config,
@@ -86,7 +86,7 @@
     EOF
   '';
 
-  # Nginx reverse proxy: grafana.local:80 → localhost:3000
+  # Nginx reverse proxy: grafana.localhost:80 → localhost:3000
   nginxConfig = pkgs.writeText "nginx-grafana.conf" ''
     daemon off;
     worker_processes 1;
@@ -97,7 +97,7 @@
       access_log /var/log/nginx-grafana-access.log;
       server {
         listen 127.0.0.1:80;
-        server_name grafana.local;
+        server_name grafana.localhost;
         location / {
           proxy_pass http://127.0.0.1:3000;
           proxy_set_header Host $host;
@@ -116,8 +116,8 @@
     [server]
     http_addr = 127.0.0.1
     http_port = 3000
-    domain = grafana.local
-    root_url = http://grafana.local
+    domain = grafana.localhost
+    root_url = http://grafana.localhost
 
     [auth.anonymous]
     enabled = true
@@ -130,7 +130,8 @@
     provisioning = ${grafanaProvisioning}
   '';
 in {
-  # Local DNS: grafana.local → 127.0.0.1
+  # .localhost is always resolved to 127.0.0.1 by browsers natively — no hosts entry needed
+  # Keep standard macOS /etc/hosts intact
   environment.etc."hosts" = {
     text = ''
       ##
@@ -139,7 +140,6 @@ in {
       127.0.0.1	localhost
       255.255.255.255	broadcasthost
       ::1             localhost
-      127.0.0.1	grafana.local
     '';
   };
 

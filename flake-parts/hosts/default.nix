@@ -31,15 +31,16 @@
       modules =
         [
           {
-            nixpkgs = {
-              overlays = extraOverlays;
-              config = {
-                allowUnfree = true;
-                permittedInsecurePackages = [
-                  "electron-37.10.3"
-                ];
-              };
-            };
+            nixpkgs.overlays = extraOverlays;
+            nixpkgs.config.allowUnfree = true;
+            nixpkgs.config.permittedInsecurePackages = [
+              "electron-37.10.3"
+              # libsoup 2.x is required by webkit2gtk-4.0 which is pulled in by
+              # the Pulse Secure VPN client (proprietary, GTK3/WebKit-based).
+              # Upstream has CVEs but the surface area is limited to the local
+              # VPN login UI on the `nixos` host.
+              "libsoup-2.74.3"
+            ];
             networking.hostName = hostName;
           }
           ./${hostName}

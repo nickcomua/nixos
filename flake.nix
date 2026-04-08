@@ -5,6 +5,14 @@
   inputs = {
     # --- BASE DEPENDENCIES ---
     nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/0.1";
+    # Older nixpkgs pin used *only* to pull `webkitgtk_4_0` for the Pulse
+    # Secure VPN package. webkitgtk_4_0 was removed from current nixpkgs on
+    # 2025-10-08 (port to libsoup_3 + webkitgtk_4_1), but Pulse Secure's
+    # proprietary GTK/WebView binaries are hard-linked against the 4.0 ABI
+    # and the webkitgtk_4_1 libraries are wire-incompatible with libsoup 2,
+    # which the rest of the Pulse binary requires. The clean fix is to ship
+    # an actual 4.0 build from a nixpkgs revision that still had it.
+    nixpkgs-webkit4.url = "github:NixOS/nixpkgs/nixos-24.11";
     flake-parts = {
       url = "https://flakehub.com/f/hercules-ci/flake-parts/0";
       inputs.nixpkgs-lib.follows = "nixpkgs";

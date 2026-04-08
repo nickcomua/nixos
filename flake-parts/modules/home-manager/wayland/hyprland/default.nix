@@ -42,6 +42,13 @@ in {
     '';
   };
 
+  # Force-overwrite hyprland.conf on every activation instead of refusing to
+  # clobber a pre-existing file. This avoids activation failures like
+  # "Existing file '/home/nick/.config/hypr/hyprland.conf' would be clobbered"
+  # without leaving stale .bak files behind (which is what backupFileExtension
+  # would do — and those backups would eventually collide too).
+  xdg.configFile."hypr/hyprland.conf".force = true;
+
   wayland.windowManager.hyprland = {
     enable = true;
 

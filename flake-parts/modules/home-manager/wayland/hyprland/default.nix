@@ -13,6 +13,31 @@
   mkAutostartList = entries: (map mkAutostartEntry entries);
 
   ipc = "noctalia-shell ipc call";
+
+  # Wrapper around wtype that fixes Noctalia's clipboard paste behavior.
+  # Noctalia runs: cliphist decode <id> | wl-copy && wtype -M ctrl -M shift v
+  # The Ctrl+Shift+V only works in terminals. This wrapper intercepts that
+  # specific call and instead reads the clipboard text and types it directly
+  # via wtype, which works universally in every app (terminals, browsers,
+  # editors, etc.). All other wtype invocations pass through unchanged.
+  wtype-wrapper = pkgs.writeShellScriptBin "wtype" ''
+    real_wtype="${pkgs.wtype}/bin/wtype"
+
+    # Detect Noctalia's broken text paste: "wtype -M ctrl -M shift v"
+    if [ "$*" = "-M ctrl -M shift v" ]; then
+      # Small delay for focus to return to the target window
+      sleep 0.12
+      # Read clipboard and type it directly -- works everywhere
+      text="$(${pkgs.wl-clipboard}/bin/wl-paste --no-newline 2>/dev/null)" || true
+      if [ -n "$text" ]; then
+        exec "$real_wtype" -- "$text"
+      fi
+      exit 0
+    fi
+
+    # Everything else passes through to real wtype unchanged
+    exec "$real_wtype" "$@"
+  '';
 in {
   home = {
     packages = with pkgs; [
@@ -20,7 +45,7 @@ in {
       cliphist # clipboard history manager for Wayland
       wl-clipboard # wl-copy/wl-paste for Wayland clipboard
       wl-clip-persist # clipboard persistence for Wayland
-      wtype # Type text via Wayland
+      wtype-wrapper # wtype with fixed clipboard paste (wraps wtype)
       yazi # Terminal file manager
       obsidian # Note-taking app
       ddcutil # DDC/CI control for external monitors

@@ -16,10 +16,10 @@
   };
 
   # Enable OpenClaw (config is in shared/clawdbot.nix)
-  programs.openclaw.enable = true;
+  # programs.openclaw.enable = true;
 
   # Disable Horse Browser as default, use Google Chrome instead
-  programs.horse-browser.setAsDefault = false;
+  # programs.horse-browser.setAsDefault = false;
 
   # Set Google Chrome as the default browser
   xdg.mimeApps = {

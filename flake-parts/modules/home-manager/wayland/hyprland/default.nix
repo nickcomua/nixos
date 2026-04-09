@@ -107,8 +107,9 @@ in {
         # follow_mouse=2
 
         touchpad = {
-          natural_scroll = "yes";
-          scroll_factor = 0.7;
+          natural_scroll = true;
+          scroll_factor = 0.3;
+          clickfinger_behavior = true;
         };
       };
 
@@ -271,7 +272,7 @@ in {
         # move the active window to the next position
         "SUPER,N,swapnext"
         # make the active window the main
-        "SUPER,A,togglesplit"
+        # "SUPER,A,togglesplit"
         # toggle pseudo tiling mode for a window
         "SUPER,P,pseudo,"
         # start hyprexpo - an overview of all workspaces
@@ -312,7 +313,7 @@ in {
       ];
 
       dwindle = {
-        pseudotile = 1; # enable pseudotiling on dwindle
+        # pseudotile = 1; # enable pseudotiling on dwindle
         force_split = 0;
       };
 

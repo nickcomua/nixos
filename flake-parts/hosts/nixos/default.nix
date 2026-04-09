@@ -15,8 +15,8 @@ in {
     # Sops for secrets management
     inputs.sops-nix.nixosModules.sops
     # Import program modules directly (prefixed with _ to exclude from auto-load)
-    ../../modules/_programs/horse-browser
-    ../../modules/_programs/librepods
+    # ../../modules/_programs/horse-browser
+    # ../../modules/_programs/librepods
     ../../modules/_programs/whisper-transcribe
     ../../modules/_programs/ps-pulse
   ];
@@ -101,9 +101,9 @@ in {
       };
     };
 
-    displayManager.sddm = {
+    displayManager.ly = {
       enable = true;
-      wayland.enable = true;
+      # wayland.enable = true;
     };
 
     avahi = {
@@ -117,13 +117,13 @@ in {
       };
     };
 
-    minio = {
-      enable = true;
-      rootCredentialsFile = "/home/nick/.secrets/minio-root-credentials";
-      dataDir = ["/var/lib/minio/data"];
-      consoleAddress = "0.0.0.0:9001";
-      listenAddress = "0.0.0.0:9000";
-    };
+    # minio = {
+    #   enable = true;
+    #   rootCredentialsFile = "/home/nick/.secrets/minio-root-credentials";
+    #   dataDir = ["/var/lib/minio/data"];
+    #   consoleAddress = "0.0.0.0:9001";
+    #   listenAddress = "0.0.0.0:9000";
+    # };
 
     desktopManager.gnome.enable = true;
     printing.enable = true;
@@ -153,6 +153,10 @@ in {
       # Allow i2c group to access I2C devices for DDC/CI monitor control
       SUBSYSTEM=="i2c-dev", GROUP="i2c", MODE="0666"
       KERNEL=="i2c-[0-9]*", GROUP="i2c", MODE="0666"
+
+      # Noctalia ideapad-battery-health plugin: grant battery_ctl group
+      # write access to conservation_mode for BAT0
+      SUBSYSTEM=="power_supply", KERNEL=="BAT0", RUN+="${pkgs.coreutils}/bin/chgrp battery_ctl /sys%p/extensions/ideapad_laptop/conservation_mode", RUN+="${pkgs.coreutils}/bin/chmod g+w /sys%p/extensions/ideapad_laptop/conservation_mode"
     '';
   };
 
@@ -197,6 +201,12 @@ in {
     };
   };
 
+  systemd.tmpfiles.rules = [
+    # Steam's FHS wrapper treats /.host-etc as a nested-wrapper marker.
+    # A stale empty directory here prevents it from exposing the real /etc.
+    "r! /.host-etc - - - - -"
+  ];
+
   # Security settings
   security = {
     rtkit.enable = true;
@@ -207,10 +217,16 @@ in {
     polkit.enable = true;
   };
 
+  # 1. Enable 32-bit graphics wrappers (Crucial for Steam's web UI)
+  hardware.graphics.enable32Bit = true;
+
+  # 2. Let NixOS inject the system's CA certificate bundle
+  security.pki.certificateFiles = [];
+
   # Programs configuration
   programs = {
-    horse-browser.enable = true;
-    librepods.enable = true;
+    # horse-browser.enable = true;
+    # librepods.enable = true;
     whisper-transcribe.enable = true;
     ps-pulse.enable = true;
     nix-ld.enable = true;
@@ -221,6 +237,20 @@ in {
     kdeconnect.enable = true;
     steam = {
       enable = true;
+      package = pkgs.steam.override {
+        extraEnv = {
+          SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
+          SSL_CERT_DIR = "/etc/ssl/certs";
+          CURL_CA_BUNDLE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
+        };
+        extraProfile = ''
+          rm -rf /etc/ssl/certs /etc/pki
+          mkdir -p /etc/ssl/certs /etc/pki/tls/certs
+          ln -sf ${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt /etc/ssl/certs/ca-certificates.crt
+          ln -sf ${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt /etc/ssl/certs/ca-bundle.crt
+          ln -sf ${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt /etc/pki/tls/certs/ca-bundle.crt
+        '';
+      };
       remotePlay.openFirewall = true;
       dedicatedServer.openFirewall = true;
     };
@@ -231,6 +261,8 @@ in {
 
   # Create i2c group if it doesn't exist
   users.groups.i2c = {};
+  # Battery conservation mode control (Noctalia ideapad-battery-health plugin)
+  users.groups.battery_ctl = {};
 
   # Define a user account
   users.users.nick = {
@@ -242,6 +274,7 @@ in {
       "wheel"
       "i2c"
       "docker"
+      "battery_ctl"
     ];
     packages = with pkgs; [];
   };
@@ -270,6 +303,7 @@ in {
     systemPackages = with pkgs; [
       vscode
       google-chrome
+      floorp-bin
       ghostty
       direnv
       fnm
@@ -290,7 +324,7 @@ in {
       gcc
       tldr
       super-productivity
-      activitywatch
+      # activitywatch
       discord
       bluez
       bluetui
@@ -298,6 +332,11 @@ in {
       kdePackages.krdp
       kdePackages.ark
       kdePackages.partitionmanager
+      # (inputs.prismlauncher-cracked.packages.${pkgs.system}.default.override {
+      #   jdks = [ pkgs.jdk25 pkgs.jdk21 pkgs.jdk17 pkgs.jdk8 ];
+      # })
+      bitwarden-desktop
+      bitwarden-cli
     ];
   };
 

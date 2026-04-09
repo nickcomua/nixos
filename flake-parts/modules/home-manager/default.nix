@@ -24,11 +24,11 @@ in {
     linux-common = import ./linux/common.nix;
 
     # Programs - home-manager parts (from _programs, excluded from auto-load)
-    horse-browser = import ../_programs/horse-browser/home.nix;
-    librepods = import ../_programs/librepods/home.nix;
+    # horse-browser = import ../_programs/horse-browser/home.nix;
+    # librepods = import ../_programs/librepods/home.nix;
 
     # Existing modules
     wayland = importApply ./wayland {inherit localFlake inputs;};
-    activitywatch = importApply ./services/activitywatch {inherit localFlake inputs;};
+    # activitywatch = importApply ./services/activitywatch {inherit localFlake inputs;};
   };
 }

@@ -86,7 +86,7 @@ in {
       "qgis"
 
       "ghostty"
-      "activitywatch"
+      # "activitywatch"
 
       # Wine/MT5 support (Whisky bundles its own Wine)
       "whisky"

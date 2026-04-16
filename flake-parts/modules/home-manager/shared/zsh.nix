@@ -1,6 +1,5 @@
 # Shared zsh configuration for all systems
 {
-  config,
   lib,
   pkgs,
   ...
@@ -126,4 +125,13 @@
     enable = true;
     enableZshIntegration = false;
   };
+
+  # Remove the manually managed ~/.zshrc before home-manager tries to link
+  # its own. Needed because `home.file."./.zshrc".force = true` doesn't work
+  # due to a path-matching quirk (target "./.zshrc" vs actual "$HOME/.zshrc").
+  home.activation.removeStaleZshrc = lib.hm.dag.entryBefore ["checkLinkTargets"] ''
+    if [ -e "$HOME/.zshrc" ] && [ ! -L "$HOME/.zshrc" ]; then
+      run rm -f "$HOME/.zshrc"
+    fi
+  '';
 }

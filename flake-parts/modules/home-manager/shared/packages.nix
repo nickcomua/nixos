@@ -1,10 +1,10 @@
 # Shared packages for all systems
 {
-  config,
   lib,
   pkgs,
   ...
-}: {
+}:
+{
   home.packages = with pkgs; [
     # Core tools
     git
@@ -21,6 +21,7 @@
     # Development
     gh
     nixd
+    nil
     alejandra
 
     # Network/utils

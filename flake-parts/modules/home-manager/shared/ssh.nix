@@ -8,6 +8,10 @@
   programs.ssh = {
     enable = true;
     enableDefaultConfig = false;
+    # Include an editable local file for ad-hoc host entries.
+    # Create ~/.ssh/config.local and add any Host blocks there;
+    # they will be picked up automatically without rebuilding.
+    includes = [ "~/.ssh/config.local" ];
     matchBlocks = {
       "cyrus.kaminazuma.com" = {
         hostname = "cyrus.kaminazuma.com";
@@ -29,4 +33,7 @@
       };
     };
   };
+
+  # Force overwrite the existing manually managed ~/.ssh/config
+  home.file.".ssh/config".force = true;
 }

@@ -11,7 +11,7 @@
     # Include an editable local file for ad-hoc host entries.
     # Create ~/.ssh/config.local and add any Host blocks there;
     # they will be picked up automatically without rebuilding.
-    includes = [ "~/.ssh/config.local" ];
+    includes = ["~/.ssh/config.local"];
     matchBlocks = {
       "cyrus.kaminazuma.com" = {
         hostname = "cyrus.kaminazuma.com";

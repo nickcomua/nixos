@@ -14,12 +14,11 @@
       c = "clear";
       h = "history";
       da = "direnv allow";
-      rm = "echo 'Use rip to delete files'";
     };
     sessionVariables = {
       ZSH_DISABLE_COMPFIX = true;
       MAILCHECK = 30;
-      EDITOR = "code --wait";
+      EDITOR = "zed --wait";
     };
     initContent = lib.mkMerge [
       (lib.mkOrder 100 ''

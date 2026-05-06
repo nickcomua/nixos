@@ -3,8 +3,7 @@
   lib,
   pkgs,
   ...
-}:
-{
+}: {
   home.packages = with pkgs; [
     # Core tools
     git

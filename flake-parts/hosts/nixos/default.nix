@@ -294,6 +294,7 @@ in {
     localBinInPath = true;
     variables = {
       XDG_RUNTIME_DIR = "/run/user/$UID";
+      BROWSER = "floorp";
     };
     # Fix bracketed paste for bash (prevents ^[[200~ appearing on paste)
     etc."inputrc".text = ''

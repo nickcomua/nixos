@@ -21,20 +21,20 @@
   # Disable Horse Browser as default, use Google Chrome instead
   # programs.horse-browser.setAsDefault = false;
 
-  # Set Google Chrome as the default browser
+  # Set Floorp as the default browser
   xdg.mimeApps = {
     enable = true;
     defaultApplications = {
-      "text/html" = "google-chrome.desktop";
-      "text/xml" = "google-chrome.desktop";
-      "application/xhtml+xml" = "google-chrome.desktop";
-      "application/xml" = "google-chrome.desktop";
-      "application/vnd.mozilla.xul+xml" = "google-chrome.desktop";
-      "application/rss+xml" = "google-chrome.desktop";
-      "application/rdf+xml" = "google-chrome.desktop";
-      "x-scheme-handler/http" = "google-chrome.desktop";
-      "x-scheme-handler/https" = "google-chrome.desktop";
-      "x-scheme-handler/unknown" = "google-chrome.desktop";
+      "text/html" = "floorp.desktop";
+      "text/xml" = "floorp.desktop";
+      "application/xhtml+xml" = "floorp.desktop";
+      "application/xml" = "floorp.desktop";
+      "application/vnd.mozilla.xul+xml" = "floorp.desktop";
+      "application/rss+xml" = "floorp.desktop";
+      "application/rdf+xml" = "floorp.desktop";
+      "x-scheme-handler/http" = "floorp.desktop";
+      "x-scheme-handler/https" = "floorp.desktop";
+      "x-scheme-handler/unknown" = "floorp.desktop";
     };
   };
 

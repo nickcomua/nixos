@@ -12,7 +12,6 @@
     fd
     fzf
     tree
-    btop
     dua
     eza
     bat
@@ -41,6 +40,8 @@
     # Kubernetes (optional, usually wanted everywhere)
     kubectl
     k9s
+
+    bws
   ];
 
   programs.home-manager.enable = true;

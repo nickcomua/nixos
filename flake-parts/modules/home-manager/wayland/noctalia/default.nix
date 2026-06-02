@@ -15,8 +15,9 @@ in {
     inputs.noctalia.homeModules.default
   ];
 
-  programs.noctalia-shell = {
+  programs.noctalia = {
     enable = true;
+    
     # Settings exported via: noctalia-shell ipc call state all | jq .settings
     # Or: Open Settings Panel -> General -> Copy Settings
     settings = builtins.fromJSON (builtins.readFile ./settings.json);
@@ -28,13 +29,13 @@ in {
 
   # Seed plugins.json as a mutable file so Noctalia can manage plugin
   # downloads/updates from custom repos at runtime. Only written if missing.
-  home.activation.noctalia-plugins = lib.hm.dag.entryAfter ["writeBoundary"] ''
-    pluginsFile="${config.xdg.configHome}/noctalia/plugins.json"
-    if [ ! -f "$pluginsFile" ] || [ -L "$pluginsFile" ]; then
-      rm -f "$pluginsFile"
-      mkdir -p "$(dirname "$pluginsFile")"
-      cp ${pluginsJson} "$pluginsFile"
-      chmod 644 "$pluginsFile"
-    fi
-  '';
+  # home.activation.noctalia-plugins = lib.hm.dag.entryAfter ["writeBoundary"] ''
+  #   pluginsFile="${config.xdg.configHome}/noctalia/plugins.json"
+  #   if [ ! -f "$pluginsFile" ] || [ -L "$pluginsFile" ]; then
+  #     rm -f "$pluginsFile"
+  #     mkdir -p "$(dirname "$pluginsFile")"
+  #     cp ${pluginsJson} "$pluginsFile"
+  #     chmod 644 "$pluginsFile"
+  #   fi
+  # '';
 }

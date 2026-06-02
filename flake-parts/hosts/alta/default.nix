@@ -26,6 +26,7 @@ in {
   services.dokploy = {
     enable = true;
     image = "nick395/dokploy:v0.25.11-postgresname3";
+    auth.useInsecureHardcodedSecret = true; # TODO: migrate to secretFile
     database.useInsecureHardcodedPassword = true; # TODO: migrate to passwordFile
   };
 

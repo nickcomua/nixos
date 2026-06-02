@@ -12,7 +12,7 @@
 
   # Linux-specific packages can be added here
   home.packages = [
-    inputs.zed.packages.${pkgs.stdenv.hostPlatform.system}.default
+    # inputs.zed.packages.${pkgs.stdenv.hostPlatform.system}.default
 
     # Linux specific tools
   ];

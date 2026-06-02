@@ -78,15 +78,11 @@
       url = "file+file:///dev/null";
       flake = false;
     };
-    catppuccin-nix = {
-      url = "github:catppuccin/nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     noctalia = {
-      url = "github:noctalia-dev/noctalia-shell";
+      url = "github:noctalia-dev/noctalia/cachix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    zed.url = "github:zed-industries/zed";
+    # zed.url = "github:zed-industries/zed";
     librepods = {
       url = "github:kavishdevar/librepods/linux/rust";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -129,11 +125,13 @@
     ];
   };
 
-  outputs = inputs @ {flake-parts, ...}: let
-    inherit (inputs.nixpkgs) lib;
-    inherit (import ./flake-parts/_bootstrap.nix {inherit lib;}) loadParts;
-  in
-    flake-parts.lib.mkFlake {inherit inputs;} {
+  outputs =
+    inputs@{ flake-parts, ... }:
+    let
+      inherit (inputs.nixpkgs) lib;
+      inherit (import ./flake-parts/_bootstrap.nix { inherit lib; }) loadParts;
+    in
+    flake-parts.lib.mkFlake { inherit inputs; } {
       debug = true;
       imports = loadParts ./flake-parts;
     };

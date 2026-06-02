@@ -1,12 +1,14 @@
 # NixOS host configuration
 {
-  config,
   pkgs,
   inputs,
+  config,
   ...
-}: let
+}:
+let
   sharedNix = import ../../modules/_shared-nix.nix;
-in {
+in
+{
   imports = [
     ./hardware-configuration.nix
     ./apfs.nix
@@ -15,10 +17,7 @@ in {
     # Sops for secrets management
     inputs.sops-nix.nixosModules.sops
     # Import program modules directly (prefixed with _ to exclude from auto-load)
-    # ../../modules/_programs/horse-browser
-    # ../../modules/_programs/librepods
     ../../modules/_programs/whisper-transcribe
-    ../../modules/_programs/ps-pulse
   ];
 
   # Sops secrets configuration
@@ -26,9 +25,13 @@ in {
     defaultSopsFile = ../../../secrets.yaml;
     age.keyFile = "/home/nick/.config/sops/age/keys.txt";
     secrets = {
-      "openclaw-hooks-token" = {};
-      "gmail-push-token" = {};
-      "telegram-bot-token" = {};
+      "openclaw-hooks-token" = { };
+      "gmail-push-token" = { };
+      "telegram-bot-token" = { };
+      "BWS_ACCESS_TOKEN" = {
+        owner = "nick"; # Changes file owner to your user
+        mode = "0400"; # Gives read-only access exclusively to the owner
+      };
     };
   };
 
@@ -46,7 +49,7 @@ in {
   # Bootloader
   boot.loader.grub = {
     enable = true;
-    devices = ["nodev"];
+    devices = [ "nodev" ];
     efiInstallAsRemovable = true;
     efiSupport = true;
     useOSProber = true;
@@ -175,9 +178,9 @@ in {
   systemd.services = {
     voice-to-text-bot = {
       description = "Voice-to-Text Telegram Bot using Whisper";
-      after = ["network-online.target"];
-      wants = ["network-online.target"];
-      wantedBy = ["multi-user.target"];
+      after = [ "network-online.target" ];
+      wants = [ "network-online.target" ];
+      wantedBy = [ "multi-user.target" ];
       serviceConfig = {
         Type = "simple";
         User = "nick";
@@ -192,7 +195,7 @@ in {
 
     fix-i2c-permissions = {
       description = "Fix I2C device permissions for ddcutil";
-      wantedBy = ["multi-user.target"];
+      wantedBy = [ "multi-user.target" ];
       serviceConfig.Type = "oneshot";
       script = ''
         chmod 666 /dev/i2c-* 2>/dev/null || true
@@ -211,7 +214,7 @@ in {
   security = {
     rtkit.enable = true;
     pam.services = {
-      hyprlock = {};
+      hyprlock = { };
       gdm-password.enableGnomeKeyring = true;
     };
     polkit.enable = true;
@@ -221,14 +224,14 @@ in {
   hardware.graphics.enable32Bit = true;
 
   # 2. Let NixOS inject the system's CA certificate bundle
-  security.pki.certificateFiles = [];
+  security.pki.certificateFiles = [ ];
 
+  hardware.openrazer.enable = true;
   # Programs configuration
   programs = {
     # horse-browser.enable = true;
     # librepods.enable = true;
     whisper-transcribe.enable = true;
-    ps-pulse.enable = true;
     nix-ld.enable = true;
     hyprland = {
       enable = true;
@@ -259,24 +262,27 @@ in {
     seahorse.enable = true;
   };
 
-  # Create i2c group if it doesn't exist
-  users.groups.i2c = {};
-  # Battery conservation mode control (Noctalia ideapad-battery-health plugin)
-  users.groups.battery_ctl = {};
+  users = {
+    # Create i2c group if it doesn't exist
+    groups.i2c = { };
+    # Battery conservation mode control (Noctalia ideapad-battery-health plugin)
+    groups.battery_ctl = { };
 
-  # Define a user account
-  users.users.nick = {
-    isNormalUser = true;
-    description = "Nick";
-    shell = pkgs.zsh;
-    extraGroups = [
-      "networkmanager"
-      "wheel"
-      "i2c"
-      "docker"
-      "battery_ctl"
-    ];
-    packages = with pkgs; [];
+    # Define a user account
+    users.nick = {
+      isNormalUser = true;
+      description = "Nick";
+      shell = pkgs.zsh;
+      extraGroups = [
+        "networkmanager"
+        "wheel"
+        "i2c"
+        "docker"
+        "battery_ctl"
+        "openrazer"
+      ];
+      # packages = with pkgs; [];
+    };
   };
 
   # Enable home-manager for user
@@ -295,8 +301,9 @@ in {
     variables = {
       XDG_RUNTIME_DIR = "/run/user/$UID";
       BROWSER = "floorp";
+      BWS_ACCESS_TOKEN = "$(cat ${config.sops.secrets."BWS_ACCESS_TOKEN".path})";
+      BWS_SERVER_URL = "https://vault.bitwarden.eu";
     };
-    # Fix bracketed paste for bash (prevents ^[[200~ appearing on paste)
     etc."inputrc".text = ''
       $include /etc/inputrc.default
       set enable-bracketed-paste off
@@ -307,6 +314,7 @@ in {
       floorp-bin
       ghostty
       direnv
+      bubblewrap
       fnm
       uv
       zellij
@@ -330,6 +338,7 @@ in {
       bluez
       bluetui
       pavucontrol
+      qt6.qtwebsockets
       kdePackages.krdp
       kdePackages.ark
       kdePackages.partitionmanager
@@ -338,6 +347,13 @@ in {
       # })
       bitwarden-desktop
       bitwarden-cli
+
+      openrazer-daemon
+      polychromatic
+      zed-editor
+
+      sops
+      age
     ];
   };
 

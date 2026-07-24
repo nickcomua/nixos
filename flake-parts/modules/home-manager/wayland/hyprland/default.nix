@@ -12,7 +12,7 @@
   }: "[workspace ${workspace} silent] ${program}";
   mkAutostartList = entries: (map mkAutostartEntry entries);
 
-  ipc = "noctalia-shell ipc call";
+  ipc = "noctalia msg";
 
   # Wrapper around wtype that fixes Noctalia's clipboard paste behavior.
   # Noctalia runs: cliphist decode <id> | wl-copy && wtype -M ctrl -M shift v
@@ -49,7 +49,28 @@ in {
       yazi # Terminal file manager
       obsidian # Note-taking app
       ddcutil # DDC/CI control for external monitors
-      btop # System monitor
+      (btop.overrideAttrs (oldAttrs: {
+        # 1. Use the correct nixpkgs attribute for the SMI library
+        buildInputs = (oldAttrs.buildInputs or []) ++ [pkgs.rocmPackages.rocm-smi];
+
+        # 2. Inform btop's custom build system where the ROCm files live
+        cmakeFlags =
+          (oldAttrs.cmakeFlags or [])
+          ++ [
+            "-DBTOP_GPU=ON"
+            "-DROCM_PATH=${pkgs.rocmPackages.rocm-smi}"
+          ];
+
+        # 3. Ensure the dynamic runtime environment links to the correct .so path
+        makeWrapperArgs =
+          (oldAttrs.makeWrapperArgs or [])
+          ++ [
+            "--prefix"
+            "LD_LIBRARY_PATH"
+            ":"
+            "${pkgs.rocmPackages.rocm-smi}/lib"
+          ];
+      })) # System monitor
       hyprshot # Screenshot utility for Hyprland
     ];
     sessionVariables = {
@@ -202,9 +223,7 @@ in {
       env = [
         "WLR_NO_HARDWARE_CURSORS,1"
         "XDG_SESSION_TYPE,wayland"
-        "XCURSOR_THEME,catppuccin-mocha-blue-cursors"
         "XCURSOR_SIZE,${toString cfg.cursor.size}"
-        "HYPRCURSOR_THEME,catppuccin-mocha-blue-cursors"
         "HYPRCURSOR_SIZE,${toString cfg.cursor.size}"
       ];
 
@@ -216,7 +235,7 @@ in {
           "wl-clip-persist --clipboard regular"
           # Clipboard watcher is handled by Noctalia (clipboardWatchTextCommand/clipboardWatchImageCommand)
           # Start Noctalia desktop shell
-          "noctalia-shell"
+          "noctalia"
           # KDE Connect indicator (tray icon + daemon)
           "kdeconnect-indicator"
         ]
@@ -256,10 +275,10 @@ in {
         "SUPER,E,exec,${pkgs.ghostty}/bin/ghostty -e ${pkgs.yazi}/bin/yazi"
 
         # Noctalia shell controls
-        "SUPER,space,exec,${ipc} launcher toggle"
-        "SUPER,V,exec,${ipc} launcher clipboard"
-        "SUPER,S,exec,${ipc} controlCenter toggle"
-        "SUPER,comma,exec,${ipc} settings toggle"
+        "SUPER,space,exec,${ipc} panel-toggle launcher"
+        "SUPER,V,exec,${ipc} panel-toggle clipboard"
+        "SUPER,S,exec,${ipc} panel-toggle control-center"
+        "SUPER,comma,exec,${ipc} settings-toggle"
 
         # open obsidian daily note
         "SUPER,B,exec, [float; minsize 500 500] ${pkgs.obsidian}/bin/obsidian obsidian://daily?vault=The%20Well"
@@ -295,14 +314,16 @@ in {
 
       # Noctalia media/brightness keys (bindel/bindl for repeat/lock support)
       bindel = [
-        ", XF86AudioRaiseVolume, exec, ${ipc} volume increase"
-        ", XF86AudioLowerVolume, exec, ${ipc} volume decrease"
-        ", XF86MonBrightnessUp, exec, ${ipc} brightness increase"
-        ", XF86MonBrightnessDown, exec, ${ipc} brightness decrease"
+        ", XF86AudioRaiseVolume, exec, ${ipc} volume-up"
+        ", XF86AudioLowerVolume, exec, ${ipc} volume-down"
+        ", XF86MonBrightnessUp, exec, ${ipc} brightness-up"
+        ", XF86MonBrightnessDown, exec, ${ipc} brightness-down"
       ];
       bindl = [
-        ", XF86AudioMute, exec, ${ipc} volume muteOutput"
-        ", XF86AudioMicMute, exec, ${ipc} volume muteInput"
+        ", XF86AudioMute, exec, ${ipc} volume-mute"
+        # Noctalia v5 handles input mute via global toggle hooks or plugins;
+        # mapping microphone mute natively if your audio module supports it:
+        ", XF86AudioMicMute, exec, wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"
       ];
 
       # move and resize windows with the mouse cursor

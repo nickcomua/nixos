@@ -36,7 +36,7 @@
               config = {
                 allowUnfree = true;
                 permittedInsecurePackages = [
-                  "electron-37.10.3"
+                  "electron-39.8.10" # todo fuck pulse secure
                   # libsoup 2.x is required by webkit2gtk-4.0 which is pulled in by
                   # the Pulse Secure VPN client (proprietary, GTK3/WebKit-based).
                   # Upstream has CVEs but the surface area is limited to the local

@@ -62,9 +62,9 @@
       ];
     };
 
-    "/run/media/nick/mac" = {
-      device = "/dev/disk/by-uuid/5d102971-8000-437e-a4be-9dc145c26a65";
-      fsType = "apfs";
+    "/run/media/nick/AI" = {
+      device = "/dev/disk/by-label/AI";
+      fsType = "btrfs";
       options = ["nofail"];
     };
 

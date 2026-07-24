@@ -18,7 +18,7 @@
     sessionVariables = {
       ZSH_DISABLE_COMPFIX = true;
       MAILCHECK = 30;
-      EDITOR = "zed --wait";
+      EDITOR = "zeditor --wait";
     };
     initContent = lib.mkMerge [
       (lib.mkOrder 100 ''

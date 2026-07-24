@@ -1,8 +1,8 @@
 # NixOS host configuration
 {
-  config,
   pkgs,
   inputs,
+  config,
   ...
 }: let
   sharedNix = import ../../modules/_shared-nix.nix;
@@ -15,10 +15,7 @@ in {
     # Sops for secrets management
     inputs.sops-nix.nixosModules.sops
     # Import program modules directly (prefixed with _ to exclude from auto-load)
-    # ../../modules/_programs/horse-browser
-    # ../../modules/_programs/librepods
     ../../modules/_programs/whisper-transcribe
-    ../../modules/_programs/ps-pulse
   ];
 
   # Sops secrets configuration
@@ -29,6 +26,10 @@ in {
       "openclaw-hooks-token" = {};
       "gmail-push-token" = {};
       "telegram-bot-token" = {};
+      "BWS_ACCESS_TOKEN" = {
+        owner = "nick"; # Changes file owner to your user
+        mode = "0400"; # Gives read-only access exclusively to the owner
+      };
     };
   };
 
@@ -161,12 +162,16 @@ in {
   };
 
   # Hardware configuration
-  hardware.bluetooth = {
-    enable = true;
-    powerOnBoot = true; # unblock rfkill so Noctalia can manage bluetooth
-    settings = {
-      General = {
-        DeviceID = "bluetooth:004C:0000:0000";
+  hardware = {
+    graphics.enable32Bit = true;
+    openrazer.enable = true;
+    bluetooth = {
+      enable = true;
+      powerOnBoot = true; # unblock rfkill so Noctalia can manage bluetooth
+      settings = {
+        General = {
+          DeviceID = "bluetooth:004C:0000:0000";
+        };
       };
     };
   };
@@ -217,9 +222,6 @@ in {
     polkit.enable = true;
   };
 
-  # 1. Enable 32-bit graphics wrappers (Crucial for Steam's web UI)
-  hardware.graphics.enable32Bit = true;
-
   # 2. Let NixOS inject the system's CA certificate bundle
   security.pki.certificateFiles = [];
 
@@ -228,7 +230,6 @@ in {
     # horse-browser.enable = true;
     # librepods.enable = true;
     whisper-transcribe.enable = true;
-    ps-pulse.enable = true;
     nix-ld.enable = true;
     hyprland = {
       enable = true;
@@ -259,24 +260,27 @@ in {
     seahorse.enable = true;
   };
 
-  # Create i2c group if it doesn't exist
-  users.groups.i2c = {};
-  # Battery conservation mode control (Noctalia ideapad-battery-health plugin)
-  users.groups.battery_ctl = {};
+  users = {
+    # Create i2c group if it doesn't exist
+    groups.i2c = {};
+    # Battery conservation mode control (Noctalia ideapad-battery-health plugin)
+    groups.battery_ctl = {};
 
-  # Define a user account
-  users.users.nick = {
-    isNormalUser = true;
-    description = "Nick";
-    shell = pkgs.zsh;
-    extraGroups = [
-      "networkmanager"
-      "wheel"
-      "i2c"
-      "docker"
-      "battery_ctl"
-    ];
-    packages = with pkgs; [];
+    # Define a user account
+    users.nick = {
+      isNormalUser = true;
+      description = "Nick";
+      shell = pkgs.zsh;
+      extraGroups = [
+        "networkmanager"
+        "wheel"
+        "i2c"
+        "docker"
+        "battery_ctl"
+        "openrazer"
+      ];
+      # packages = with pkgs; [];
+    };
   };
 
   # Enable home-manager for user
@@ -295,8 +299,9 @@ in {
     variables = {
       XDG_RUNTIME_DIR = "/run/user/$UID";
       BROWSER = "floorp";
+      BWS_ACCESS_TOKEN = "$(cat ${config.sops.secrets."BWS_ACCESS_TOKEN".path})";
+      BWS_SERVER_URL = "https://vault.bitwarden.eu";
     };
-    # Fix bracketed paste for bash (prevents ^[[200~ appearing on paste)
     etc."inputrc".text = ''
       $include /etc/inputrc.default
       set enable-bracketed-paste off
@@ -307,6 +312,7 @@ in {
       floorp-bin
       ghostty
       direnv
+      bubblewrap
       fnm
       uv
       zellij
@@ -330,6 +336,7 @@ in {
       bluez
       bluetui
       pavucontrol
+      qt6.qtwebsockets
       kdePackages.krdp
       kdePackages.ark
       kdePackages.partitionmanager
@@ -338,6 +345,13 @@ in {
       # })
       bitwarden-desktop
       bitwarden-cli
+
+      openrazer-daemon
+      polychromatic
+      zed-editor
+
+      sops
+      age
     ];
   };
 

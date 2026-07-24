@@ -4,11 +4,9 @@
   inputs,
   config,
   ...
-}:
-let
+}: let
   sharedNix = import ../../modules/_shared-nix.nix;
-in
-{
+in {
   imports = [
     ./hardware-configuration.nix
     ./apfs.nix
@@ -25,9 +23,9 @@ in
     defaultSopsFile = ../../../secrets.yaml;
     age.keyFile = "/home/nick/.config/sops/age/keys.txt";
     secrets = {
-      "openclaw-hooks-token" = { };
-      "gmail-push-token" = { };
-      "telegram-bot-token" = { };
+      "openclaw-hooks-token" = {};
+      "gmail-push-token" = {};
+      "telegram-bot-token" = {};
       "BWS_ACCESS_TOKEN" = {
         owner = "nick"; # Changes file owner to your user
         mode = "0400"; # Gives read-only access exclusively to the owner
@@ -49,7 +47,7 @@ in
   # Bootloader
   boot.loader.grub = {
     enable = true;
-    devices = [ "nodev" ];
+    devices = ["nodev"];
     efiInstallAsRemovable = true;
     efiSupport = true;
     useOSProber = true;
@@ -164,12 +162,16 @@ in
   };
 
   # Hardware configuration
-  hardware.bluetooth = {
-    enable = true;
-    powerOnBoot = true; # unblock rfkill so Noctalia can manage bluetooth
-    settings = {
-      General = {
-        DeviceID = "bluetooth:004C:0000:0000";
+  hardware = {
+    graphics.enable32Bit = true;
+    openrazer.enable = true;
+    bluetooth = {
+      enable = true;
+      powerOnBoot = true; # unblock rfkill so Noctalia can manage bluetooth
+      settings = {
+        General = {
+          DeviceID = "bluetooth:004C:0000:0000";
+        };
       };
     };
   };
@@ -178,9 +180,9 @@ in
   systemd.services = {
     voice-to-text-bot = {
       description = "Voice-to-Text Telegram Bot using Whisper";
-      after = [ "network-online.target" ];
-      wants = [ "network-online.target" ];
-      wantedBy = [ "multi-user.target" ];
+      after = ["network-online.target"];
+      wants = ["network-online.target"];
+      wantedBy = ["multi-user.target"];
       serviceConfig = {
         Type = "simple";
         User = "nick";
@@ -195,7 +197,7 @@ in
 
     fix-i2c-permissions = {
       description = "Fix I2C device permissions for ddcutil";
-      wantedBy = [ "multi-user.target" ];
+      wantedBy = ["multi-user.target"];
       serviceConfig.Type = "oneshot";
       script = ''
         chmod 666 /dev/i2c-* 2>/dev/null || true
@@ -214,19 +216,15 @@ in
   security = {
     rtkit.enable = true;
     pam.services = {
-      hyprlock = { };
+      hyprlock = {};
       gdm-password.enableGnomeKeyring = true;
     };
     polkit.enable = true;
   };
 
-  # 1. Enable 32-bit graphics wrappers (Crucial for Steam's web UI)
-  hardware.graphics.enable32Bit = true;
-
   # 2. Let NixOS inject the system's CA certificate bundle
-  security.pki.certificateFiles = [ ];
+  security.pki.certificateFiles = [];
 
-  hardware.openrazer.enable = true;
   # Programs configuration
   programs = {
     # horse-browser.enable = true;
@@ -264,9 +262,9 @@ in
 
   users = {
     # Create i2c group if it doesn't exist
-    groups.i2c = { };
+    groups.i2c = {};
     # Battery conservation mode control (Noctalia ideapad-battery-health plugin)
-    groups.battery_ctl = { };
+    groups.battery_ctl = {};
 
     # Define a user account
     users.nick = {

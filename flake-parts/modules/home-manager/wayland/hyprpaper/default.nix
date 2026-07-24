@@ -1,7 +1,6 @@
 {pkgs, ...}: {
   home.packages = [pkgs.hyprpaper];
 
-
   systemd.user.services.hyprpaper = {
     Unit = {
       Description = "hyprpaper";

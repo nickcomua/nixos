@@ -1,5 +1,4 @@
-{ inputs, ... }:
-{
+{inputs, ...}: {
   imports = [
     ./options.nix
     ./hyprland
@@ -8,5 +7,4 @@
     ./hyprpaper
     ./satty
   ];
-
 }

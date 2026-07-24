@@ -17,7 +17,7 @@ in {
 
   programs.noctalia = {
     enable = true;
-    
+
     # Settings exported via: noctalia-shell ipc call state all | jq .settings
     # Or: Open Settings Panel -> General -> Copy Settings
     settings = builtins.fromJSON (builtins.readFile ./settings.json);

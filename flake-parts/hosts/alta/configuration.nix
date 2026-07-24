@@ -6,7 +6,25 @@
   lib,
   pkgs,
   ...
-}: {
+}: let
+  holesail = pkgs.stdenv.mkDerivation {
+    pname = "holesail";
+    version = "2.4.1";
+
+    src = pkgs.fetchurl {
+      url = "https://github.com/holesail/holesail/releases/download/2.4.1/linux-arm64.zip";
+      hash = "sha256-NMWZdPFM3agA6bx8v0oe5oc+U4r1qLtafEh1hJbFqN4=";
+    };
+
+    nativeBuildInputs = [pkgs.unzip];
+    dontUnpack = true;
+
+    installPhase = ''
+      unzip "$src" -d release
+      install -Dm755 "$(find release -type f -name holesail -print -quit)" "$out/bin/holesail"
+    '';
+  };
+in {
   imports = [
     ./hardware-configuration.nix
   ];
@@ -29,6 +47,45 @@
         PasswordAuthentication = false;
         KbdInteractiveAuthentication = false;
         PermitRootLogin = "yes";
+      };
+    };
+  };
+
+  systemd = {
+    services = {
+      holesail = {
+        description = "Holesail tunnel for the local service";
+        after = ["network-online.target"];
+        wants = ["network-online.target"];
+        wantedBy = ["multi-user.target"];
+
+        serviceConfig = {
+          Type = "simple";
+          ExecStart = "${holesail}/bin/holesail --connect hs://s000ojG5RcxT7gDFcUckzG1S5c2GUBZcmIkA --host 127.0.0.1 --port 8080";
+          Restart = "always";
+          RestartSec = "10s";
+        };
+      };
+
+      holesail-local-post = {
+        description = "POST to the service exposed through Holesail";
+        after = ["holesail.service"];
+        requires = ["holesail.service"];
+
+        serviceConfig = {
+          Type = "oneshot";
+          ExecStart = "${pkgs.curl}/bin/curl --fail --silent --show-error --max-time 20 --request POST http://127.0.0.1:8080/";
+        };
+      };
+    };
+
+    timers.holesail-local-post = {
+      description = "POST to the local Holesail service every minute";
+      wantedBy = ["timers.target"];
+      timerConfig = {
+        OnBootSec = "1min";
+        OnUnitActiveSec = "1min";
+        Persistent = true;
       };
     };
   };

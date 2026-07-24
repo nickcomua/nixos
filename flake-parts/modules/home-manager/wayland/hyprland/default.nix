@@ -4,15 +4,12 @@
   pkgs,
   config,
   ...
-}:
-let
+}: let
   cfg = config.wayland;
-  mkAutostartEntry =
-    {
-      program,
-      workspace,
-    }:
-    "[workspace ${workspace} silent] ${program}";
+  mkAutostartEntry = {
+    program,
+    workspace,
+  }: "[workspace ${workspace} silent] ${program}";
   mkAutostartList = entries: (map mkAutostartEntry entries);
 
   ipc = "noctalia msg";
@@ -41,8 +38,7 @@ let
     # Everything else passes through to real wtype unchanged
     exec "$real_wtype" "$@"
   '';
-in
-{
+in {
   home = {
     packages = with pkgs; [
       hyprcursor
@@ -54,20 +50,27 @@ in
       obsidian # Note-taking app
       ddcutil # DDC/CI control for external monitors
       (btop.overrideAttrs (oldAttrs: {
-          # 1. Use the correct nixpkgs attribute for the SMI library
-          buildInputs = (oldAttrs.buildInputs or []) ++ [ pkgs.rocmPackages.rocm-smi ];
-      
-          # 2. Inform btop's custom build system where the ROCm files live
-          cmakeFlags = (oldAttrs.cmakeFlags or []) ++ [
+        # 1. Use the correct nixpkgs attribute for the SMI library
+        buildInputs = (oldAttrs.buildInputs or []) ++ [pkgs.rocmPackages.rocm-smi];
+
+        # 2. Inform btop's custom build system where the ROCm files live
+        cmakeFlags =
+          (oldAttrs.cmakeFlags or [])
+          ++ [
             "-DBTOP_GPU=ON"
             "-DROCM_PATH=${pkgs.rocmPackages.rocm-smi}"
           ];
-      
-          # 3. Ensure the dynamic runtime environment links to the correct .so path
-          makeWrapperArgs = (oldAttrs.makeWrapperArgs or []) ++ [
-            "--prefix" "LD_LIBRARY_PATH" ":" "${pkgs.rocmPackages.rocm-smi}/lib"
+
+        # 3. Ensure the dynamic runtime environment links to the correct .so path
+        makeWrapperArgs =
+          (oldAttrs.makeWrapperArgs or [])
+          ++ [
+            "--prefix"
+            "LD_LIBRARY_PATH"
+            ":"
+            "${pkgs.rocmPackages.rocm-smi}/lib"
           ];
-        })) # System monitor
+      })) # System monitor
       hyprshot # Screenshot utility for Hyprland
     ];
     sessionVariables = {
@@ -104,7 +107,7 @@ in
     plugins = [
       # inputs.hyprland-plugins.packages.${pkgs.stdenv.hostPlatform.system}.hyprexpo
     ];
-    systemd.variables = [ "--all" ];
+    systemd.variables = ["--all"];
     settings = {
       # Configure multiple monitors
       # Format: "NAME,RESOLUTION@REFRESH,POSITION,SCALE"
@@ -225,17 +228,18 @@ in
       ];
 
       # list of commands to run during Hyprland startup
-      exec-once = [
-        # import env vars set with home.sessionVariables
-        "systemctl --user import-environment DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP ELECTRON_OZONE_PLATFORM_HINT"
-        "wl-clip-persist --clipboard regular"
-        # Clipboard watcher is handled by Noctalia (clipboardWatchTextCommand/clipboardWatchImageCommand)
-        # Start Noctalia desktop shell
-        "noctalia"
-        # KDE Connect indicator (tray icon + daemon)
-        "kdeconnect-indicator"
-      ]
-      ++ mkAutostartList cfg.hyprland.autostart;
+      exec-once =
+        [
+          # import env vars set with home.sessionVariables
+          "systemctl --user import-environment DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP ELECTRON_OZONE_PLATFORM_HINT"
+          "wl-clip-persist --clipboard regular"
+          # Clipboard watcher is handled by Noctalia (clipboardWatchTextCommand/clipboardWatchImageCommand)
+          # Start Noctalia desktop shell
+          "noctalia"
+          # KDE Connect indicator (tray icon + daemon)
+          "kdeconnect-indicator"
+        ]
+        ++ mkAutostartList cfg.hyprland.autostart;
 
       windowrule = [
         "float on, match:title ^(Open Folder)$" # File Chooser
@@ -334,9 +338,9 @@ in
         force_split = 0;
       };
 
-      master = { };
+      master = {};
 
-      plugin = [ ];
+      plugin = [];
     };
 
     extraConfig = ''

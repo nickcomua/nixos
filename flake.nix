@@ -125,13 +125,11 @@
     ];
   };
 
-  outputs =
-    inputs@{ flake-parts, ... }:
-    let
-      inherit (inputs.nixpkgs) lib;
-      inherit (import ./flake-parts/_bootstrap.nix { inherit lib; }) loadParts;
-    in
-    flake-parts.lib.mkFlake { inherit inputs; } {
+  outputs = inputs @ {flake-parts, ...}: let
+    inherit (inputs.nixpkgs) lib;
+    inherit (import ./flake-parts/_bootstrap.nix {inherit lib;}) loadParts;
+  in
+    flake-parts.lib.mkFlake {inherit inputs;} {
       debug = true;
       imports = loadParts ./flake-parts;
     };

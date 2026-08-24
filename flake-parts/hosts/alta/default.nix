@@ -10,11 +10,18 @@ in {
   imports = [
     ./configuration.nix
     ./hardware-configuration.nix
+    inputs.sops-nix.nixosModules.sops
     # TODO: determinate-nix tests fail in CI - re-enable when upstream fixes it
     # inputs.determinate.nixosModules.default
     inputs.nix-dokploy.nixosModules.default
     inputs.vscode-server.nixosModules.default
   ];
+
+  sops = {
+    defaultSopsFile = ../../../secrets.yaml;
+    age.sshKeyPaths = ["/etc/ssh/ssh_host_ed25519_key"];
+    secrets.BWS_ACCESS_TOKEN = {};
+  };
 
   # Nix settings - caches and experimental features
   nix.settings = {

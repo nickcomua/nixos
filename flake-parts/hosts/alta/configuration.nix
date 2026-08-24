@@ -29,6 +29,22 @@ in {
     ./hardware-configuration.nix
   ];
 
+  # The Raspberry Pi 4 USB-C power connector also supports USB 2 gadget mode.
+  # Present it as an Ethernet adapter whenever Alta is powered over USB-C.
+  boot = {
+    kernelModules = [
+      "dwc2"
+      "g_ether"
+    ];
+    extraModprobeConfig = ''
+      options g_ether dev_addr=02:00:00:00:07:02 host_addr=02:00:00:00:07:01
+    '';
+    loader = {
+      grub.enable = false;
+      generic-extlinux-compatible.enable = true;
+    };
+  };
+
   services = {
     avahi = {
       enable = true;
@@ -41,6 +57,19 @@ in {
       };
     };
     resolved.enable = true;
+
+    # Assign the USB host 192.168.7.1 so Alta is always reachable at
+    # 192.168.7.2 without relying on Ethernet, mDNS, or internet access.
+    dnsmasq = {
+      enable = true;
+      settings = {
+        interface = "usb0";
+        bind-dynamic = true;
+        dhcp-range = "192.168.7.1,192.168.7.1,255.255.255.0,1h";
+        dhcp-option = "option:router";
+      };
+    };
+
     openssh = {
       enable = true;
       settings = {
@@ -51,48 +80,65 @@ in {
     };
   };
 
-  systemd = {
-    services = {
-      holesail = {
-        description = "Holesail tunnel for the local service";
-        after = ["network-online.target"];
-        wants = ["network-online.target"];
-        wantedBy = ["multi-user.target"];
+  systemd.services.holesail-ssh = {
+    description = "Expose Alta SSH through Holesail";
+    after = [
+      "network-online.target"
+      "sshd.service"
+    ];
+    wants = ["network-online.target"];
+    requires = ["sshd.service"];
+    wantedBy = ["multi-user.target"];
 
-        serviceConfig = {
-          Type = "simple";
-          ExecStart = "${holesail}/bin/holesail --connect hs://s000ojG5RcxT7gDFcUckzG1S5c2GUBZcmIkA --host 127.0.0.1 --port 8080";
-          Restart = "always";
-          RestartSec = "10s";
-        };
-      };
+    preStart = ''
+      umask 077
+      export BWS_ACCESS_TOKEN="$(${pkgs.coreutils}/bin/cat ${config.sops.secrets.BWS_ACCESS_TOKEN.path})"
+      export BWS_SERVER_URL="https://vault.bitwarden.eu"
 
-      holesail-local-post = {
-        description = "POST to the service exposed through Holesail";
-        after = ["holesail.service"];
-        requires = ["holesail.service"];
+      ${pkgs.bws}/bin/bws secret get \
+        f197f4ae-b8ae-4f9a-998d-b4b00156fb3a \
+        --output json \
+        | ${pkgs.jq}/bin/jq --exit-status --raw-output '.value | select(length > 0)' \
+        > /run/holesail-ssh/connection-key
+    '';
 
-        serviceConfig = {
-          Type = "oneshot";
-          ExecStart = "${pkgs.curl}/bin/curl --fail --silent --show-error --max-time 20 --request POST http://127.0.0.1:8080/";
-        };
-      };
-    };
+    script = ''
+      exec ${holesail}/bin/holesail \
+        --live 22 \
+        --host 127.0.0.1 \
+        --key "$(${pkgs.coreutils}/bin/cat /run/holesail-ssh/connection-key)"
+    '';
 
-    timers.holesail-local-post = {
-      description = "POST to the local Holesail service every minute";
-      wantedBy = ["timers.target"];
-      timerConfig = {
-        OnBootSec = "1min";
-        OnUnitActiveSec = "1min";
-        Persistent = true;
-      };
+    serviceConfig = {
+      Type = "simple";
+      RuntimeDirectory = "holesail-ssh";
+      RuntimeDirectoryMode = "0700";
+      Restart = "on-failure";
+      RestartSec = "10s";
+      StandardOutput = "null";
+
+      # Holesail needs outbound networking only; SSH stays bound to localhost.
+      NoNewPrivileges = true;
+      PrivateTmp = true;
+      ProtectHome = true;
+      ProtectSystem = "strict";
     };
   };
 
   networking = {
     hostName = "alta";
-    interfaces.end0.useDHCP = true;
+    interfaces = {
+      end0.useDHCP = true;
+      usb0 = {
+        useDHCP = false;
+        ipv4.addresses = [
+          {
+            address = "192.168.7.2";
+            prefixLength = 24;
+          }
+        ];
+      };
+    };
     nameservers = [
       "127.0.0.53"
       "8.8.8.8"
@@ -138,11 +184,6 @@ in {
     nix-ld.enable = true;
   };
 
-  boot.loader = {
-    grub.enable = false;
-    generic-extlinux-compatible.enable = true;
-  };
-
   users = {
     users.alta = {
       isNormalUser = true;
@@ -154,9 +195,11 @@ in {
     };
     extraUsers = {
       alta.openssh.authorizedKeys.keys = [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJu6go/Gdfcvom2fGVsGnZ8lVUYgeg0ujHCi8HCikU3o mykola.korniichuk.ua@gmail.com"
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMaEFydTkBViXJm0/JFThRvRthUm4j4RfZ3SL8GYoWDi mykola.korniichuk.ua@gmail.com"
       ];
       root.openssh.authorizedKeys.keys = [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJu6go/Gdfcvom2fGVsGnZ8lVUYgeg0ujHCi8HCikU3o mykola.korniichuk.ua@gmail.com"
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMaEFydTkBViXJm0/JFThRvRthUm4j4RfZ3SL8GYoWDi mykola.korniichuk.ua@gmail.com"
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBQnJ1mXvCd8Q4i6Hg2kA6AzDSpbwBI4aEB9SN5v6hVF dokploy"
       ];

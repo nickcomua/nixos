@@ -45,28 +45,38 @@ in {
   };
 
   # Bootloader
-  boot.loader.grub = {
-    enable = true;
-    devices = ["nodev"];
-    efiInstallAsRemovable = true;
-    efiSupport = true;
-    useOSProber = true;
-    theme = pkgs.stdenv.mkDerivation {
-      pname = "distro-grub-themes";
-      version = "3.1";
-      src = pkgs.fetchFromGitHub {
-        owner = "AdisonCavani";
-        repo = "distro-grub-themes";
-        rev = "v3.1";
-        hash = "sha256-ZcoGbbOMDDwjLhsvs77C7G7vINQnprdfI37a9ccrmPs=";
+  boot = {
+    extraModprobeConfig = ''
+      options iwlmvm power_scheme=1
+    '';
+    binfmt.emulatedSystems = ["aarch64-linux"];
+
+    loader.grub = {
+      enable = true;
+      devices = ["nodev"];
+      efiInstallAsRemovable = true;
+      efiSupport = true;
+      useOSProber = true;
+      theme = pkgs.stdenv.mkDerivation {
+        pname = "distro-grub-themes";
+        version = "3.1";
+        src = pkgs.fetchFromGitHub {
+          owner = "AdisonCavani";
+          repo = "distro-grub-themes";
+          rev = "v3.1";
+          hash = "sha256-ZcoGbbOMDDwjLhsvs77C7G7vINQnprdfI37a9ccrmPs=";
+        };
+        installPhase = "cp -r customize/nixos $out";
       };
-      installPhase = "cp -r customize/nixos $out";
     };
   };
 
   networking = {
     hostName = "nixos";
-    networkmanager.enable = true;
+    networkmanager = {
+      enable = true;
+      settings.connection."wifi.powersave" = 2;
+    };
     firewall.allowedTCPPorts = [
       9000
       9001
@@ -94,6 +104,7 @@ in {
 
   # Services configuration
   services = {
+    flatpak.enable = true;
     xserver = {
       enable = true;
       xkb = {
@@ -318,6 +329,7 @@ in {
       zellij
       git
       jujutsu
+      iw # Inspect Wi-Fi link, BSSID, bitrate, and power state.
       fzf
       pkg-config
       llvmPackages.bintools
@@ -340,9 +352,6 @@ in {
       kdePackages.krdp
       kdePackages.ark
       kdePackages.partitionmanager
-      # (inputs.prismlauncher-cracked.packages.${pkgs.system}.default.override {
-      #   jdks = [ pkgs.jdk25 pkgs.jdk21 pkgs.jdk17 pkgs.jdk8 ];
-      # })
       bitwarden-desktop
       bitwarden-cli
 

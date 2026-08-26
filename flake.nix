@@ -51,8 +51,9 @@
       url = "github:nix-community/nixos-vscode-server";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    nix-dokploy = {
-      url = "github:el-kurto/nix-dokploy";
+    ssd-doda-bot = {
+      url = "github:nickcomua/ssd-doda-bot";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     # --- SHARED ---

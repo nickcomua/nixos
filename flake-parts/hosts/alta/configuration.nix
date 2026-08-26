@@ -125,6 +125,46 @@ in {
     };
   };
 
+  systemd.services.home-assistant-holesail = {
+    description = "Expose Home Assistant through Holesail";
+    after = [
+      "network-online.target"
+      "home-assistant.service"
+    ];
+    wants = ["network-online.target"];
+    requires = ["home-assistant.service"];
+    wantedBy = ["multi-user.target"];
+
+    preStart = ''
+      ${pkgs.coreutils}/bin/install \
+        --mode 0600 \
+        ${config.sops.secrets.home-assistant-holesail-key.path} \
+        /run/home-assistant-holesail/connection-key
+    '';
+
+    script = ''
+      exec ${holesail}/bin/holesail \
+        --live 8123 \
+        --host 127.0.0.1 \
+        --key "$(${pkgs.coreutils}/bin/cat /run/home-assistant-holesail/connection-key)" \
+        --log
+    '';
+
+    serviceConfig = {
+      Type = "simple";
+      RuntimeDirectory = "home-assistant-holesail";
+      RuntimeDirectoryMode = "0700";
+      Restart = "on-failure";
+      RestartSec = "10s";
+      StandardOutput = "null";
+
+      NoNewPrivileges = true;
+      PrivateTmp = true;
+      ProtectHome = true;
+      ProtectSystem = "strict";
+    };
+  };
+
   networking = {
     hostName = "alta";
     interfaces = {
@@ -161,23 +201,14 @@ in {
     };
   };
 
-  environment = {
-    etc."systemd/resolved.conf.d/custom.conf".text = ''
-      [Resolve]
-      MulticastDNS=yes
-      DNSStubListener=yes
-      DNSStubListenerExtra=172.17.0.1
-    '';
-    systemPackages = with pkgs; [
-      git
-      dnsmasq
-      iptables
-      nftables
-      dive
-      podman-tui
-      docker-compose
-    ];
-  };
+  environment.systemPackages = with pkgs; [
+    git
+    jujutsu
+    gg-jj
+    dnsmasq
+    iptables
+    nftables
+  ];
 
   programs = {
     direnv.enable = true;
@@ -189,7 +220,6 @@ in {
       isNormalUser = true;
       extraGroups = [
         "wheel"
-        "docker"
       ];
       password = "     ";
     };
@@ -201,27 +231,11 @@ in {
       root.openssh.authorizedKeys.keys = [
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJu6go/Gdfcvom2fGVsGnZ8lVUYgeg0ujHCi8HCikU3o mykola.korniichuk.ua@gmail.com"
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMaEFydTkBViXJm0/JFThRvRthUm4j4RfZ3SL8GYoWDi mykola.korniichuk.ua@gmail.com"
-        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBQnJ1mXvCd8Q4i6Hg2kA6AzDSpbwBI4aEB9SN5v6hVF dokploy"
       ];
     };
   };
 
   time.timeZone = "Europe/Amsterdam";
-
-  virtualisation = {
-    containers.enable = true;
-    docker = {
-      enable = true;
-      daemon.settings = {
-        live-restore = false;
-        dns = [
-          "172.17.0.1"
-          "8.8.8.8"
-          "8.8.4.4"
-        ];
-      };
-    };
-  };
 
   nix.settings.experimental-features = [
     "nix-command"

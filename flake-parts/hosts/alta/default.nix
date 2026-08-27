@@ -26,6 +26,7 @@ in {
   imports = [
     ./configuration.nix
     ./hardware-configuration.nix
+    ./monitoring.nix
     inputs.sops-nix.nixosModules.sops
     # TODO: determinate-nix tests fail in CI - re-enable when upstream fixes it
     # inputs.determinate.nixosModules.default
@@ -36,8 +37,10 @@ in {
     defaultSopsFile = ../../../secrets.yaml;
     age.sshKeyPaths = ["/etc/ssh/ssh_host_ed25519_key"];
     secrets = {
-      BWS_ACCESS_TOKEN = {};
-      home-assistant-holesail-key = {};
+      BWS_ACCESS_TOKEN = {
+        group = "bws";
+        mode = "0440";
+      };
       ssd-doda-bot-tg-api-id = {};
       ssd-doda-bot-tg-api-hash = {};
       ssd-doda-bot-tg-bot-token = {};

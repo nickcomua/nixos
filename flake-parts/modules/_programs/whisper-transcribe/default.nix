@@ -1,4 +1,4 @@
-# Whisper transcription tool for OpenClaw
+# Whisper transcription and desktop dictation
 {
   config,
   lib,

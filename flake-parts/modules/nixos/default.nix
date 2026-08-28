@@ -7,7 +7,6 @@ _: {
     # Programs are imported directly in host configs to avoid evaluation
     # issues during flake check (modules reference NixOS-specific options)
     # horse-browser = ./programs/horse-browser;
-    # librepods = ./programs/librepods;
 
     # Monitoring: Grafana + Prometheus (node_exporter + comin) + Loki + Promtail
     monitoring = ./monitoring.nix;

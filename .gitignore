@@ -247,3 +247,8 @@ cscope.in.out
 cscope.po.out
 
 .mcp.json
+__pycache__/
+*.pyc
+.desktop-export-*/
+.desktop-apply-*/
+desktop.previous/

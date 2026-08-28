@@ -13,7 +13,7 @@ This is a multi-system Nix configuration built using the flake-parts architectur
 ```bash
 # --- NixOS (x86_64-linux) ---
 # Rebuild and switch to new configuration
-sudo nixos-rebuild switch --flake ~/.config/nixos/#nixos
+pkexec nixos-rebuild switch --flake ~/.config/nixos/#nixos
 
 # Build without applying (test for errors)
 nixos-rebuild build --flake ~/.config/nixos/#nixos
@@ -111,7 +111,6 @@ flake-parts/
     ├── _shared-nix.nix      # Shared Nix cache/substituter settings (excluded from auto-load)
     ├── _programs/           # Program modules (excluded from auto-load)
     │   ├── horse-browser/
-    │   ├── librepods/
     │   └── whisper-transcribe/
     ├── darwin/              # Darwin system-level modules (imported directly by darwin hosts)
     │   ├── default.nix      # Stops auto-loader recursion
@@ -121,11 +120,10 @@ flake-parts/
     │   └── monitoring.nix
     └── home-manager/
         ├── default.nix      # Exports homeModules via importApply
-        ├── shared/          # Cross-platform (zsh, packages, clawdbot)
+        ├── shared/          # Cross-platform (zsh, packages)
         │   ├── default.nix
         │   ├── zsh.nix
         │   ├── packages.nix
-        │   └── clawdbot.nix
         ├── linux/           # Linux-specific modules
         │   └── common.nix
         ├── darwin/          # macOS-specific modules
@@ -187,7 +185,7 @@ Uses `withHomeManager = false` — no home-manager is configured for alta.
 }
 ```
 
-**Home-manager modules NOT using `importApply`** (shared, linux-common, darwin-common, horse-browser, librepods) use standard single-layer module structure:
+**Home-manager modules NOT using `importApply`** (shared, linux-common, darwin-common, horse-browser) use standard single-layer module structure:
 
 ```nix
 { config, lib, pkgs, ... }:
@@ -336,7 +334,7 @@ sops updatekeys secrets.yaml
 ### Build-Time vs Runtime Secrets
 
 - **Runtime secrets**: Use `config.sops.secrets."name".path` for services that read from files
-- **Build-time config values**: Use placeholder pattern with activation script substitution (see `clawdbot.nix` for example)
+- **Build-time config values**: Use placeholder pattern with activation script substitution
 
 ### Initial Setup on New Machine
 
@@ -355,7 +353,6 @@ GitHub Actions runs on every push and PR (`.github/workflows/ci.yml`):
 3. **build-alta** - Build aarch64-linux (Raspberry Pi) configuration via QEMU on an 8-core runner (3h timeout)
 4. **build-macos** - Build aarch64-darwin macOS configuration
 5. **promote-nixos / promote-alta / promote-darwin** - On main branch, push to stable branches after successful builds
-6. **notify** - Sends webhook notification after all builds complete (success or failure); requires `CI_WEBHOOK_URL` and `CI_WEBHOOK_TOKEN` secrets
 
 ### Stable Branches
 
@@ -366,8 +363,6 @@ GitHub Actions runs on every push and PR (`.github/workflows/ci.yml`):
 ### Required GitHub Secrets
 
 - `CACHIX_AUTH_TOKEN` - Auth token for cachix.org binary cache (nickcomua)
-- `CI_WEBHOOK_URL` - (Optional) Webhook URL for build notifications
-- `CI_WEBHOOK_TOKEN` - (Optional) Bearer token for webhook auth
 
 ## Important Notes
 

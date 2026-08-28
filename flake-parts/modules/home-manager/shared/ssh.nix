@@ -12,24 +12,24 @@
     # Create ~/.ssh/config.local and add any Host blocks there;
     # they will be picked up automatically without rebuilding.
     includes = ["~/.ssh/config.local"];
-    matchBlocks = {
+    settings = {
       "cyrus.kaminazuma.com" = {
-        hostname = "cyrus.kaminazuma.com";
-        user = "ubuntu";
-        forwardX11 = true;
-        forwardX11Trusted = true;
+        HostName = "cyrus.kaminazuma.com";
+        User = "ubuntu";
+        ForwardX11 = true;
+        ForwardX11Trusted = true;
       };
       "kaminazuma.com" = {
-        hostname = "167.71.67.207";
-        user = "root";
+        HostName = "167.71.67.207";
+        User = "root";
       };
       "alta.local" = {
-        hostname = "alta.local";
-        user = "root";
+        HostName = "alta.local";
+        User = "root";
       };
       "alta" = {
-        hostname = "kaminazuma.com";
-        user = "root";
+        HostName = "kaminazuma.com";
+        User = "root";
       };
     };
   };

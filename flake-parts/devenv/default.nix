@@ -22,6 +22,9 @@
         else null;
     };
   in {
+    # Current devenv still emits deprecated *-devenv-up/test package outputs.
+    # The CLI owns those commands now; keep only the development shells.
+    packages = lib.mkForce {};
     devenv.shells = {
       dev = devShellConfig;
       # Use the same evaluated config for default to avoid secretspec conflicts

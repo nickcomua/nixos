@@ -11,7 +11,7 @@
     ".config/hypr/monitors.lua": "82e671d8b82fa6a2db7ff1d3add567010b85809dd7d2eede2387744db621029f",
     ".config/mimeapps.list": "b307e63c746f15754327be9fb02efb3d0a75aaea8e1cd1f0c78597096ab7626f",
     ".config/nixarchy/advanced.nix": "784ce14b265a004db0b2ecae61fa5dc25c05d5b32a8a36825d49f22a993daa03",
-    ".config/nixarchy/apps.nix": "152f3a4bf9be5bd12a4fb3fba9388acd85cb689e4d8097862dafbcc4bc7acb6a",
+    ".config/nixarchy/apps.nix": "75d4e8512aed971a85f03e9487d61ccf03873fe0b68da7c3f493abcec519a972",
     ".config/nixarchy/services.nix": "df1ce32c9c6c1ae3571ad5c2f261f9c441e32ef8bcda2dde2259dcfa5e51cc2a",
     ".config/omarchy/branding/about.txt": "5fe8adced2fe67e410e177477a7272d1807b3fedc81fbc3f030dd479bc046b76",
     ".config/omarchy/branding/screensaver.txt": "c2617d9ea6012dd73729d94af63b0831598a4859cafb20f196691d50ea2ea57f",

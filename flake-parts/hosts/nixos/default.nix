@@ -337,29 +337,27 @@ in {
     # horse-browser.enable = true;
     nm-applet.enable = false;
     whisper-transcribe.enable = true;
-    nix-ld.enable = true;
-    kdeconnect.enable = true;
-    steam = {
+    nix-ld = {
       enable = true;
-      package = pkgs.steam.override {
-        extraEnv = {
-          SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
-          SSL_CERT_DIR = "/etc/ssl/certs";
-          CURL_CA_BUNDLE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
-        };
-        extraProfile = ''
-          rm -rf /etc/ssl/certs /etc/pki
-          mkdir -p /etc/ssl/certs /etc/pki/tls/certs
-          ln -sf ${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt /etc/ssl/certs/ca-certificates.crt
-          ln -sf ${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt /etc/ssl/certs/ca-bundle.crt
-          ln -sf ${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt /etc/pki/tls/certs/ca-bundle.crt
-        '';
-      };
-      remotePlay.openFirewall = true;
-      dedicatedServer.openFirewall = true;
+      # Runtime dependencies for downloaded Electron apps (including Hermes Desktop).
+      libraries = with pkgs; [
+        dbus
+        atk
+        at-spi2-atk
+        at-spi2-core
+        cups
+        cairo
+        gtk3
+        pango
+        libXcomposite
+        libXdamage
+        libXfixes
+        libgbm
+        expat
+      ];
     };
+    kdeconnect.enable = true;
     zsh.enable = true;
-    firefox.enable = true;
     seahorse.enable = true;
   };
 
@@ -410,21 +408,15 @@ in {
       $include /etc/inputrc.default
       set enable-bracketed-paste off
     '';
+    # Applications without a Nixarchy catalog entry.
     systemPackages = with pkgs; [
       applyDesktop
-      vscode
-      google-chrome
       floorp-bin
-      ghostty
       direnv
       bubblewrap
       fnm
-      uv
       zellij
-      git
-      jujutsu
       iw # Inspect Wi-Fi link, BSSID, bitrate, and power state.
-      fzf
       pkg-config
       llvmPackages.bintools
       glibc.dev
@@ -434,28 +426,20 @@ in {
       libsecret
       telegram-desktop
       google-cloud-sdk
-      gcc
       tldr
       super-productivity
-      # activitywatch
       discord
-      bluez
       bluetui
       pavucontrol
       qt6.qtwebsockets
       kdePackages.krdp
       kdePackages.ark
       kdePackages.partitionmanager
-      bitwarden-desktop
-      bitwarden-cli
-
       openrazer-daemon
       polychromatic
-      zed-editor
-
-      sops
       age
-
+      yazi
+      bitwarden-cli
       wireguard-tools
       proton-vpn
     ];

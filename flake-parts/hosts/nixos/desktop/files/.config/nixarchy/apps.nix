@@ -1,35 +1,35 @@
 # Why: modules/AGENTS.md#applications-available-through-the-omarchy-menu-as
-_: {
+{pkgs, ...}: {
   programs.nixarchy.apps = {
     # ── Service ─────────────────────────────────────────────────────
     # _1password.enable = true;  #@ _1password  # unfree — Needs the module, not the package: unlocking requires a setuid helper that only programs._1password-gui installs. Set `settings.polkitPolicyOwners = [ "yourname" ]`.
     #   _1password.settings = { };  #@ _1password.settings
     bitwarden.enable = true; #@ bitwarden
     # dropbox.enable = true;  #@ dropbox  # unfree
-    # nordvpn.enable = true;  #@ nordvpn  # unfree
+    nordvpn.enable = true; #@ nordvpn  # unfree
     # once.enable = true;  #@ once
     # signal.enable = true;  #@ signal
     # spotify.enable = true;  #@ spotify  # unfree
 
     # ── Utility ─────────────────────────────────────────────────────
-    # aether.enable = true;  #@ aether
-    # android-tools.enable = true;  #@ android-tools
-    # omacalc.enable = true;  #@ omacalc
-    # omacut.enable = true;  #@ omacut
-    # omawrite.enable = true;  #@ omawrite
-    # scrcpy.enable = true;  #@ scrcpy
+    aether.enable = true; #@ aether
+    android-tools.enable = true; #@ android-tools
+    omacalc.enable = true; #@ omacalc
+    omacut.enable = true; #@ omacut
+    omawrite.enable = true; #@ omawrite
+    scrcpy.enable = true; #@ scrcpy
 
     # ── Terminal ────────────────────────────────────────────────────
     # alacritty.enable = true;  #@ alacritty
     # foot.enable = true;  #@ foot
-    # ghostty.enable = true;  #@ ghostty
+    ghostty.enable = true; #@ ghostty
     # kitty.enable = true;  #@ kitty
 
     # ── AI ──────────────────────────────────────────────────────────
     # antigravity.enable = true;  #@ antigravity  # unfree
     # chatgpt.enable = true;  #@ chatgpt  # unfree
     # claude-code.enable = true;  #@ claude-code  # unfree
-    # codex.enable = true;  #@ codex
+    codex.enable = true; #@ codex
     dictation.enable = true; #@ dictation
     # gemini-cli.enable = true;  #@ gemini-cli
     # grok-bot.enable = true;  #@ grok-bot  # unfree
@@ -41,9 +41,9 @@ _: {
 
     # ── Browser ─────────────────────────────────────────────────────
     # brave.enable = true;  #@ brave
-    # chrome.enable = true;  #@ chrome  # unfree
+    chrome.enable = true; #@ chrome  # unfree
     # edge.enable = true;  #@ edge  # unfree
-    # firefox.enable = true;  #@ firefox  # A NixOS module, so policies and extensions are declarative too.
+    firefox.enable = true; #@ firefox  # A NixOS module, so policies and extensions are declarative too.
     #   firefox.settings = { };  #@ firefox.settings
     # zen.enable = true;  #@ zen
 
@@ -64,7 +64,7 @@ _: {
     # rust.enable = true;  #@ rust  # rustup manages its own toolchains under ~/.rustup, the same as upstream. Use pkgs.cargo and pkgs.rustc instead if you would rather Nix pinned the compiler.
     # scala.enable = true;  #@ scala
     # symfony.enable = true;  #@ symfony  # unfree
-    # uv.enable = true;  #@ uv  # Astral's Python package and project manager. `nixarchy dev init python` gives each project its own; this one is for everywhere else.
+    uv.enable = true; #@ uv  # Astral's Python package and project manager. `nixarchy dev init python` gives each project its own; this one is for everywhere else.
     # zig.enable = true;  #@ zig
 
     # ── Editor ──────────────────────────────────────────────────────
@@ -72,7 +72,7 @@ _: {
     # emacs.enable = true;  #@ emacs
     # helix.enable = true;  #@ helix
     # vim.enable = true;  #@ vim
-    # vscode.enable = true;  #@ vscode  # unfree
+    vscode.enable = true; #@ vscode  # unfree
     zed.enable = true; #@ zed
 
     # ── Gaming ──────────────────────────────────────────────────────
@@ -80,13 +80,30 @@ _: {
     # lutris.enable = true;  #@ lutris
     # minecraft.enable = true;  #@ minecraft
     # retroarch.enable = true;  #@ retroarch  # Ships 13 free cores. For more -- including snes9x, genesis-plus-gx, mame and dolphin, which nixpkgs marks unfree -- set allowUnfree and override the package:   apps.retroarch.package =     pkgs.retroarch.withCores (c: [ c.snes9x c.mame c.dolphin ]);
-    # steam.enable = true;  #@ steam  # unfree — A module, not a package: Steam needs an FHS wrapper to run at all.
-    #   steam.settings = { };  #@ steam.settings
+    steam.enable = true; #@ steam  # unfree — A module, not a package: Steam needs an FHS wrapper to run at all.
+    steam.settings = {
+      package = pkgs.steam.override {
+        extraEnv = {
+          SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
+          SSL_CERT_DIR = "/etc/ssl/certs";
+          CURL_CA_BUNDLE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
+        };
+        extraProfile = ''
+          rm -rf /etc/ssl/certs /etc/pki
+          mkdir -p /etc/ssl/certs /etc/pki/tls/certs
+          ln -sf ${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt /etc/ssl/certs/ca-certificates.crt
+          ln -sf ${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt /etc/ssl/certs/ca-bundle.crt
+          ln -sf ${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt /etc/pki/tls/certs/ca-bundle.crt
+        '';
+      };
+      remotePlay.openFirewall = true;
+      dedicatedServer.openFirewall = true;
+    };
     # xbox-controllers.enable = true;  #@ xbox-controllers  # A kernel driver, so it is a hardware option rather than a package.
     #   xbox-controllers.settings = { };  #@ xbox-controllers.settings
 
     # ── Preinstalls ─────────────────────────────────────────────────
-    # obsidian.enable = true;  #@ obsidian  # unfree — Preinstalled upstream, opt-in here because it is unfree. Theme syncing needs the Omarchy theme selected under Appearance > Themes in the app; omarchy-theme-set-obsidian writes it on every theme change.
+    obsidian.enable = true; #@ obsidian  # unfree — Preinstalled upstream, opt-in here because it is unfree. Theme syncing needs the Omarchy theme selected under Appearance > Themes in the app; omarchy-theme-set-obsidian writes it on every theme change.
   };
 }
 # Offered by the Omarchy menu but with no nixpkgs equivalent:

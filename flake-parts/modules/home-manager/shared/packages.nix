@@ -6,7 +6,6 @@
 }: {
   home.packages = with pkgs; [
     # Core tools
-    git
     jujutsu
     ripgrep
     fd

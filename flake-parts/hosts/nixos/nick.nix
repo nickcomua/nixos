@@ -14,12 +14,7 @@
     username = "nick";
     homeDirectory = "/home/nick";
   };
-
-  # Nixi shows Codex first and uses it when no per-session agent is selected.
-  services.nixi.agents = lib.mkForce [
-    "codex"
-    "opencode"
-  ];
+  services.nixi.enable = false;
 
   # Disable Horse Browser as default, use Google Chrome instead
   # programs.horse-browser.setAsDefault = false;

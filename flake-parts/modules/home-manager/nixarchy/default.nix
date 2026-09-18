@@ -42,7 +42,7 @@ in {
     defaultTheme = "tokyo-night";
   };
   home = {
-    packages = [configTool pkgs.yazi pkgs.obsidian pkgs.ddcutil];
+    packages = [configTool];
     sessionVariables = {
       NIXARCHY_FLAKE = "/home/nick/.config/nixos";
       NH_ELEVATION_STRATEGY = "/run/wrappers/bin/pkexec";

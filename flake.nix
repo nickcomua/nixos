@@ -74,11 +74,7 @@
         sops-nix.follows = "sops-nix";
       };
     };
-    nixi = {
-      url = "github:olafkfreund/nixi-nixarchy";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    nixarchy.inputs.nixi.follows = "nixi";
+
     # aw-watcher-window-hyprland = {
     #   url = "github:bobvanderlinden/aw-watcher-window-hyprland";
     #   inputs.nixpkgs.follows = "nixpkgs";

@@ -1198,9 +1198,7 @@
         "microvm": "microvm",
         "nix-flatpak": "nix-flatpak",
         "nix-index-database": "nix-index-database",
-        "nixi": [
-          "nixi"
-        ],
+        "nixi": "nixi",
         "nixos-hardware": "nixos-hardware",
         "nixpkgs": [
           "nixpkgs"
@@ -1256,20 +1254,22 @@
     "nixi": {
       "inputs": {
         "nixpkgs": [
+          "nixarchy",
           "nixpkgs"
         ]
       },
       "locked": {
-        "lastModified": 1789726545,
-        "narHash": "sha256-rlD5FGOkPEimdN22HlwYlGmCTD0+wdcOkfvkfmPLnPs=",
+        "lastModified": 1789718549,
+        "narHash": "sha256-S8Hm0f/KXpwCkro150CiWcaCHDOIbYKmlacnkUf3anM=",
         "owner": "olafkfreund",
         "repo": "nixi-nixarchy",
-        "rev": "0d17f4b787fd2cf9d524a9e19fe3f4027601e1aa",
+        "rev": "6b5878a427e0bb007fa7c673b4786ad80bf270fd",
         "type": "github"
       },
       "original": {
         "owner": "olafkfreund",
         "repo": "nixi-nixarchy",
+        "rev": "6b5878a427e0bb007fa7c673b4786ad80bf270fd",
         "type": "github"
       }
     },
@@ -1490,7 +1490,6 @@
         "nix-darwin": "nix-darwin",
         "nix-homebrew": "nix-homebrew",
         "nixarchy": "nixarchy",
-        "nixi": "nixi",
         "nixpkgs": "nixpkgs_4",
         "prismlauncher-cracked": "prismlauncher-cracked",
         "sops-nix": "sops-nix",

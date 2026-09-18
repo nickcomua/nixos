@@ -20,9 +20,6 @@
         },
         {
           "id": "omarchy.system-update"
-        },
-        {
-          "id": "io.github.olafkfreund.nixi-button"
         }
       ],
       "left": [
@@ -41,9 +38,7 @@
           "id": "omaconnect",
           "showBarBattery": true
         },
-        {
-          "id": "omarchy.agents"
-        },
+
         {
           "id": "omarchy.bluetooth"
         },
@@ -68,10 +63,6 @@
     "lock": 300,
     "screensaver": 150
   },
-  "plugins": [
-    {
-      "id": "io.github.olafkfreund.nixi"
-    }
-  ],
+  "plugins": [],
   "version": 1
 }

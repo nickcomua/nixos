@@ -55,9 +55,9 @@
           elif [[ -f /etc/NIXOS ]]; then
             # NixOS
             if [[ -d ~/.config/nixos ]]; then
-              sudo nixos-rebuild switch --flake ~/.config/nixos
+              nh os switch ~/.config/nixos
             elif [[ -d /etc/nixos ]]; then
-              sudo nixos-rebuild switch --flake /etc/nixos
+              nh os switch /etc/nixos
             else
               echo "Error: No NixOS config found in ~/.config/nixos or /etc/nixos"
               return 1
@@ -68,7 +68,7 @@
           fi
         }
       ''
-      (lib.mkIf pkgs.stdenv.isDarwin ''
+      (lib.mkIf pkgs.stdenv.hostPlatform.isDarwin ''
         # macOS specific
         eval "$(uv generate-shell-completion zsh)"
         eval "$(uvx --generate-shell-completion zsh)"
@@ -116,7 +116,7 @@
           "fzf"
           "direnv"
         ]
-        ++ lib.optionals pkgs.stdenv.isDarwin ["macos"];
+        ++ lib.optionals pkgs.stdenv.hostPlatform.isDarwin ["macos"];
     };
   };
 

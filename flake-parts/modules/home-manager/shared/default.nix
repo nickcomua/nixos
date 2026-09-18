@@ -3,7 +3,6 @@
   imports = [
     ./zsh.nix
     ./packages.nix
-    ./clawdbot.nix
     ./ssh.nix
   ];
 }

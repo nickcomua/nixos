@@ -1,0 +1,14 @@
+{
+  "permissionMode": "permission",
+  "fontScale": 1,
+  "searchDebounceMs": 270,
+  "keyboardLineImpulse": 335,
+  "keyboardDeceleration": 608,
+  "fileOpenCommand": [],
+  "fileEditCommand": [],
+  "useHyprlandShortcutSubmap": false,
+  "repoSearchDepth": 6,
+  "agent": "codex",
+  "model": "gpt-6-astra",
+  "reasoningEffort": "low"
+}

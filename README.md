@@ -6,7 +6,7 @@ Multi-system Nix configuration managing NixOS, macOS (nix-darwin), and Raspberry
 
 | Host | Platform | Description |
 |------|----------|-------------|
-| `nixos` | x86_64-linux | Main development machine with Hyprland |
+| `nixos` | x86_64-linux | Main development machine with Nixarchy/Omarchy |
 | `mykolas-macbook-pro` | aarch64-darwin | MacBook Pro with nix-darwin |
 | `alta` | aarch64-linux | Raspberry Pi deployment server |
 
@@ -14,7 +14,7 @@ Multi-system Nix configuration managing NixOS, macOS (nix-darwin), and Raspberry
 
 ```bash
 # NixOS - rebuild and switch
-sudo nixos-rebuild switch --flake ~/.config/nixos/#nixos
+pkexec nixos-rebuild switch --flake ~/.config/nixos/#nixos
 
 # macOS - rebuild and switch
 darwin-rebuild switch --flake ~/.config/nixos/#Mykolas-MacBook-Pro
@@ -58,10 +58,10 @@ flake-parts/
 │       └── mykolas-macbook-pro/  # macOS host (aarch64-darwin)
 └── modules/
     ├── home-manager/
-    │   ├── shared/          # Cross-platform (zsh, packages, openclaw)
+    │   ├── shared/          # Cross-platform (zsh, packages)
     │   ├── linux/           # Linux-specific modules
     │   ├── darwin/          # macOS-specific modules
-    │   ├── wayland/         # Hyprland ecosystem
+    │   ├── nixarchy/        # Omarchy desktop and customization snapshots
     │   └── services/        # User services (activitywatch)
     ├── nixos/               # System-level NixOS modules
     └── _programs/           # Program modules (excluded from auto-load)
@@ -79,19 +79,20 @@ Home-manager modules are registered in `modules/home-manager/default.nix` and lo
 
 ## Key Features
 
-### Wayland/Hyprland
+### Nixarchy/Omarchy
 
-- Comprehensive Hyprland configuration with multi-monitor support
-- Adaptive brightness control (laptop + external DDC/CI monitors)
-- Hyprpanel, Hyprlock, Hypridle, Hyprpaper integration
-- Vicinae app launcher with clipboard history
-- Satty screenshot annotation
+- Omarchy desktop, menus, themes and plugins on NixOS, with SDDM login
+- Personal shortcuts and monitor layout layered over upstream Hyprland settings
+- Codex integration and upstream AI tools
+- Writable desktop settings with explicit export, status and backed-up restore
+- Main packages from Determinate's `nixpkgs-weekly`; Zed from `pkgs.zed-editor`
+
+See [desktop customization and rollback](docs/nixarchy.md) for usage and validation details.
 
 ### Cross-Platform
 
 - Shared zsh configuration with platform-specific extensions
 - Common packages across all systems
-- Clawdbot Telegram integration (macOS + NixOS)
 
 ### Hardware Support
 

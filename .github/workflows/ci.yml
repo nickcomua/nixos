@@ -21,6 +21,8 @@ jobs:
         run: nix fmt -- --check .
       - name: Lint with statix
         run: nix run nixpkgs#statix -- check .
+      - name: Test desktop export and restore
+        run: nix build --accept-flake-config .#checks.x86_64-linux.desktop-config --no-link
 
   build-nixos:
     runs-on: ubuntu-latest
@@ -42,7 +44,9 @@ jobs:
           name: nickcomua
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
       - name: Build NixOS (x86_64-linux)
-        run: nix build .#nixosConfigurations.nixos.config.system.build.toplevel --no-link
+        run: nix build --accept-flake-config .#nixosConfigurations.nixos.config.system.build.toplevel --no-link
+      - name: Test Omarchy desktop plugins in a VM
+        run: nix build --accept-flake-config .#checks.x86_64-linux.desktop-plugins --no-link
 
   build-alta:
     runs-on: ubuntu-24.04-arm
@@ -107,40 +111,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git push origin HEAD:stable-alta --force-with-lease
-
-  # Notification job - runs after all builds complete or fail
-  notify:
-    runs-on: ubuntu-latest
-    needs: [build-nixos, build-alta, build-macos]
-    if: always()  # Run even if builds fail
-    steps:
-      - name: Determine CI status
-        id: status
-        run: |
-          if [[ "${{ needs.build-nixos.result }}" == "success" && "${{ needs.build-alta.result }}" == "success" && "${{ needs.build-macos.result }}" == "success" ]]; then
-            echo "status=success" >> $GITHUB_OUTPUT
-            echo "message=✅ All builds passed: nixos, alta, macos" >> $GITHUB_OUTPUT
-          else
-            echo "status=failure" >> $GITHUB_OUTPUT
-            echo "message=❌ Build failures: nixos=${{ needs.build-nixos.result }}, alta=${{ needs.build-alta.result }}, macos=${{ needs.build-macos.result }}" >> $GITHUB_OUTPUT
-          fi
-          
-      - name: Send webhook notification
-        if: env.WEBHOOK_URL != ''
-        env:
-          WEBHOOK_URL: ${{ secrets.CI_WEBHOOK_URL }}
-        run: |
-          curl -X POST "$WEBHOOK_URL" \
-            -H "Content-Type: application/json" \
-            -H "Authorization: Bearer ${{ secrets.CI_WEBHOOK_TOKEN }}" \
-            -d "{
-              \"status\": \"${{ steps.status.outputs.status }}\",
-              \"message\": \"${{ steps.status.outputs.message }}\",
-              \"commit\": \"${{ github.sha }}\",
-              \"branch\": \"${{ github.ref_name }}\",
-              \"run_url\": \"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\",
-              \"timestamp\": \"$(date -Iseconds)\"
-            }" || echo "Webhook notification failed"
 
   promote-darwin:
     runs-on: ubuntu-latest

@@ -25,10 +25,9 @@ in {
 
     # Programs - home-manager parts (from _programs, excluded from auto-load)
     # horse-browser = import ../_programs/horse-browser/home.nix;
-    # librepods = import ../_programs/librepods/home.nix;
 
     # Existing modules
-    wayland = importApply ./wayland {inherit localFlake inputs;};
+    nixarchy = ./nixarchy;
     # activitywatch = importApply ./services/activitywatch {inherit localFlake inputs;};
   };
 }

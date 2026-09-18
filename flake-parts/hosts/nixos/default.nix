@@ -1,11 +1,15 @@
 # NixOS host configuration
 {
   pkgs,
+  lib,
   inputs,
   config,
   ...
 }: let
   sharedNix = import ../../modules/_shared-nix.nix;
+  applyDesktop = lib.hiPrio (pkgs.writeShellScriptBin "nixarchy-apply" ''
+    exec /etc/profiles/per-user/nick/bin/nixarchy-config apply "$@"
+  '');
 in {
   imports = [
     ./hardware-configuration.nix
@@ -16,14 +20,51 @@ in {
     inputs.sops-nix.nixosModules.sops
     # Import program modules directly (prefixed with _ to exclude from auto-load)
     ../../modules/_programs/whisper-transcribe
+    inputs.nixarchy.nixosModules.nixarchy
+    ../../../nixarchy-apps.nix
   ];
+
+  programs.nixarchy = {
+    enable = true;
+    user = "nick";
+    flake = "/home/nick/.config/nixos";
+    defaultAgent = "codex";
+    preinstalls = true;
+    displayManager = true;
+    bootSplash = "force";
+    shellIntegration = false;
+    bashIntegration = false;
+    binaryCaches = false; # Centralized in _shared-nix.nix.
+    package = (pkgs.extend inputs.nixarchy.overlays.default).omarchy.overrideAttrs (old: {
+      postPatch =
+        (old.postPatch or "")
+        + ''
+          substituteInPlace default/sddm/omarchy/Main.qml \
+              --replace-fail 'Keys.onPressed: {' 'Keys.onPressed: function(event) {'
+        '';
+    });
+    menu.extraEntries = {
+      "personal".label = "My configuration";
+      "personal.export" = {
+        label = "Save desktop to Nix";
+        action = "omarchy-launch-floating-terminal-with-presentation nixarchy-config export";
+      };
+      "personal.status" = {
+        label = "Unsaved desktop changes";
+        action = "omarchy-launch-floating-terminal-with-presentation nixarchy-config status";
+      };
+      "personal.restore" = {
+        label = "Restore saved desktop";
+        action = "omarchy-launch-floating-terminal-with-presentation nixarchy-config restore";
+      };
+    };
+  };
 
   # Sops secrets configuration
   sops = {
     defaultSopsFile = ../../../secrets.yaml;
     age.keyFile = "/home/nick/.config/sops/age/keys.txt";
     secrets = {
-      "openclaw-hooks-token" = {};
       "gmail-push-token" = {};
       "telegram-bot-token" = {};
       "BWS_ACCESS_TOKEN" = {
@@ -33,19 +74,30 @@ in {
     };
   };
 
-  # Nix settings - caches and experimental features
-  nix.settings = {
-    inherit (sharedNix.caches) substituters;
-    trusted-public-keys = sharedNix.caches.trustedPublicKeys;
-    experimental-features = sharedNix.experimentalFeatures;
-    trusted-users = [
-      "root"
-      "nick"
-    ];
+  nix = {
+    settings = {
+      extra-substituters = sharedNix.caches.substituters;
+      trusted-public-keys = sharedNix.caches.trustedPublicKeys;
+      experimental-features = sharedNix.experimentalFeatures;
+      trusted-users = [
+        "root"
+        "nick"
+      ];
+    };
+    gc = {
+      automatic = true;
+      dates = "weekly";
+      options = "--delete-older-than 7d";
+    };
+    optimise = {
+      automatic = true;
+      dates = ["weekly"];
+    };
   };
 
   # Bootloader
   boot = {
+    kernelPackages = pkgs.linuxPackages_6_18;
     extraModprobeConfig = ''
       options iwlmvm power_scheme=1
     '';
@@ -57,6 +109,7 @@ in {
       efiInstallAsRemovable = true;
       efiSupport = true;
       useOSProber = true;
+      configurationLimit = 14;
       theme = pkgs.stdenv.mkDerivation {
         pname = "distro-grub-themes";
         version = "3.1";
@@ -75,12 +128,23 @@ in {
     hostName = "nixos";
     networkmanager = {
       enable = true;
-      settings.connection."wifi.powersave" = 2;
+      wifi.backend = "iwd";
+      settings = {
+        # dnscrypt-proxy owns DNS configuration for this host.
+        main.dns = "none";
+        connection."wifi.powersave" = 2;
+
+        # Let NetworkManager—not iwd—control autoconnection.
+        device."wifi.iwd.autoconnect" = false;
+      };
     };
-    firewall.allowedTCPPorts = [
-      9000
-      9001
-    ];
+    firewall = {
+      checkReversePath = false;
+      allowedTCPPorts = [
+        9000
+        9001
+      ];
+    };
   };
 
   # Set your time zone
@@ -104,6 +168,37 @@ in {
 
   # Services configuration
   services = {
+    suwayomi-server = {
+      enable = true;
+      settings.server = {
+        kcefEnabled = false;
+        initialOpenInBrowserEnabled = false;
+      };
+    };
+    dnscrypt-proxy = {
+      enable = true;
+      settings = {
+        # Quad9 Secure: DNSSEC validation and malicious-domain blocking over DoH.
+        server_names = [
+          "quad9-doh-ip4-port443-filter-pri"
+          "quad9-doh-ip6-port443-filter-pri"
+        ];
+        listen_addresses = [
+          "127.0.0.1:53"
+          "[::1]:53"
+        ];
+        bootstrap_resolvers = [
+          "9.9.9.9:53"
+          "149.112.112.112:53"
+          "[2620:fe::fe]:53"
+          "[2620:fe::9]:53"
+        ];
+        require_dnssec = true;
+        require_nolog = true;
+        require_nofilter = false;
+      };
+    };
+
     flatpak.enable = true;
     xserver = {
       enable = true;
@@ -113,9 +208,9 @@ in {
       };
     };
 
-    displayManager.ly = {
-      enable = true;
-      # wayland.enable = true;
+    displayManager = {
+      defaultSession = "omarchy";
+      ly.enable = false;
     };
 
     avahi = {
@@ -137,14 +232,12 @@ in {
     #   listenAddress = "0.0.0.0:9000";
     # };
 
-    desktopManager.gnome.enable = true;
+    desktopManager.gnome.enable = false;
     printing.enable = true;
 
-    # power-profiles-daemon is required by Noctalia for power profile controls
-    # https://docs.noctalia.dev/getting-started/nixos/
+    # Desktop power and battery controls.
     power-profiles-daemon.enable = true;
 
-    # upower is required by Noctalia for battery status
     upower.enable = true;
     pulseaudio.enable = false;
 
@@ -178,7 +271,7 @@ in {
     openrazer.enable = true;
     bluetooth = {
       enable = true;
-      powerOnBoot = true; # unblock rfkill so Noctalia can manage bluetooth
+      powerOnBoot = true;
       settings = {
         General = {
           DeviceID = "bluetooth:004C:0000:0000";
@@ -188,49 +281,52 @@ in {
   };
 
   # Systemd services
-  systemd.services = {
-    voice-to-text-bot = {
-      description = "Voice-to-Text Telegram Bot using Whisper";
-      after = ["network-online.target"];
-      wants = ["network-online.target"];
-      wantedBy = ["multi-user.target"];
-      serviceConfig = {
-        Type = "simple";
-        User = "nick";
-        Group = "users";
-        WorkingDirectory = "/home/nick/projects/voice-to-text-rs";
-        Restart = "on-failure";
-        RestartSec = "10s";
-        EnvironmentFile = "/home/nick/.secrets/voice-to-text-bot.env";
-        ExecStart = "${pkgs.nix}/bin/nix run /home/nick/projects/voice-to-text-rs";
+  systemd = {
+    services = {
+      voice-to-text-bot = {
+        description = "Voice-to-Text Telegram Bot using Whisper";
+        after = ["network-online.target"];
+        wants = ["network-online.target"];
+        wantedBy = ["multi-user.target"];
+        serviceConfig = {
+          Type = "simple";
+          User = "nick";
+          Group = "users";
+          WorkingDirectory = "/home/nick/projects/voice-to-text-rs";
+          Restart = "on-failure";
+          RestartSec = "10s";
+          EnvironmentFile = "/home/nick/.secrets/voice-to-text-bot.env";
+          ExecStart = "${pkgs.nix}/bin/nix run /home/nick/projects/voice-to-text-rs";
+        };
+      };
+
+      fix-i2c-permissions = {
+        description = "Fix I2C device permissions for ddcutil";
+        wantedBy = ["multi-user.target"];
+        serviceConfig.Type = "oneshot";
+        script = ''
+          chmod 666 /dev/i2c-* 2>/dev/null || true
+          chgrp i2c /dev/i2c-* 2>/dev/null || true
+        '';
+      };
+      # Flatpak's remote setup needs the resolver after networking restarts on switch.
+      flatpak-managed-install = {
+        wants = ["network-online.target"];
+        after = ["network-online.target" "dnscrypt-proxy.service"];
       };
     };
-
-    fix-i2c-permissions = {
-      description = "Fix I2C device permissions for ddcutil";
-      wantedBy = ["multi-user.target"];
-      serviceConfig.Type = "oneshot";
-      script = ''
-        chmod 666 /dev/i2c-* 2>/dev/null || true
-        chgrp i2c /dev/i2c-* 2>/dev/null || true
-      '';
-    };
+    tmpfiles.rules = [
+      # Steam's FHS wrapper treats /.host-etc as a nested-wrapper marker.
+      # A stale empty directory here prevents it from exposing the real /etc.
+      "r! /.host-etc - - - - -"
+    ];
   };
-
-  systemd.tmpfiles.rules = [
-    # Steam's FHS wrapper treats /.host-etc as a nested-wrapper marker.
-    # A stale empty directory here prevents it from exposing the real /etc.
-    "r! /.host-etc - - - - -"
-  ];
 
   # Security settings
   security = {
     rtkit.enable = true;
-    pam.services = {
-      hyprlock = {};
-      gdm-password.enableGnomeKeyring = true;
-    };
     polkit.enable = true;
+    polkit.enablePkexecWrapper = true;
   };
 
   # 2. Let NixOS inject the system's CA certificate bundle
@@ -239,35 +335,29 @@ in {
   # Programs configuration
   programs = {
     # horse-browser.enable = true;
-    # librepods.enable = true;
+    nm-applet.enable = false;
     whisper-transcribe.enable = true;
-    nix-ld.enable = true;
-    hyprland = {
+    nix-ld = {
       enable = true;
-      xwayland.enable = true;
+      # Runtime dependencies for downloaded Electron apps (including Hermes Desktop).
+      libraries = with pkgs; [
+        dbus
+        atk
+        at-spi2-atk
+        at-spi2-core
+        cups
+        cairo
+        gtk3
+        pango
+        libXcomposite
+        libXdamage
+        libXfixes
+        libgbm
+        expat
+      ];
     };
     kdeconnect.enable = true;
-    steam = {
-      enable = true;
-      package = pkgs.steam.override {
-        extraEnv = {
-          SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
-          SSL_CERT_DIR = "/etc/ssl/certs";
-          CURL_CA_BUNDLE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
-        };
-        extraProfile = ''
-          rm -rf /etc/ssl/certs /etc/pki
-          mkdir -p /etc/ssl/certs /etc/pki/tls/certs
-          ln -sf ${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt /etc/ssl/certs/ca-certificates.crt
-          ln -sf ${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt /etc/ssl/certs/ca-bundle.crt
-          ln -sf ${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt /etc/pki/tls/certs/ca-bundle.crt
-        '';
-      };
-      remotePlay.openFirewall = true;
-      dedicatedServer.openFirewall = true;
-    };
     zsh.enable = true;
-    firefox.enable = true;
     seahorse.enable = true;
   };
 
@@ -307,6 +397,7 @@ in {
   # Environment configuration
   environment = {
     localBinInPath = true;
+    pathsToLink = ["/share/omarchy"];
     variables = {
       XDG_RUNTIME_DIR = "/run/user/$UID";
       BROWSER = "floorp";
@@ -317,20 +408,15 @@ in {
       $include /etc/inputrc.default
       set enable-bracketed-paste off
     '';
+    # Applications without a Nixarchy catalog entry.
     systemPackages = with pkgs; [
-      vscode
-      google-chrome
+      applyDesktop
       floorp-bin
-      ghostty
       direnv
       bubblewrap
       fnm
-      uv
       zellij
-      git
-      jujutsu
       iw # Inspect Wi-Fi link, BSSID, bitrate, and power state.
-      fzf
       pkg-config
       llvmPackages.bintools
       glibc.dev
@@ -340,27 +426,22 @@ in {
       libsecret
       telegram-desktop
       google-cloud-sdk
-      gcc
       tldr
       super-productivity
-      # activitywatch
       discord
-      bluez
       bluetui
       pavucontrol
       qt6.qtwebsockets
       kdePackages.krdp
       kdePackages.ark
       kdePackages.partitionmanager
-      bitwarden-desktop
-      bitwarden-cli
-
       openrazer-daemon
       polychromatic
-      zed-editor
-
-      sops
       age
+      yazi
+      bitwarden-cli
+      wireguard-tools
+      proton-vpn
     ];
   };
 

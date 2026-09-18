@@ -57,7 +57,7 @@ in {
 
   # Nix settings - caches and experimental features
   nix.settings = {
-    inherit (sharedNix.caches) substituters;
+    extra-substituters = sharedNix.caches.substituters;
     trusted-public-keys = sharedNix.caches.trustedPublicKeys;
     experimental-features = sharedNix.experimentalFeatures;
   };

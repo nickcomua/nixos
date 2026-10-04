@@ -5,7 +5,8 @@
   config,
   pkgs,
   ...
-}: let
+}:
+let
   bwsServerUrl = "https://vault.bitwarden.eu";
 
   bwsCli = pkgs.writeShellScriptBin "bws" ''
@@ -14,7 +15,8 @@
     export BWS_SERVER_URL="${bwsServerUrl}"
     exec ${pkgs.bws}/bin/bws "$@"
   '';
-in {
+in
+{
   imports = [
     ./hardware-configuration.nix
   ];
@@ -81,9 +83,9 @@ in {
   systemd.services = {
     cloudflared-services = {
       description = "Cloudflare Tunnel for hosted services";
-      after = ["network-online.target"];
-      wants = ["network-online.target"];
-      wantedBy = ["multi-user.target"];
+      after = [ "network-online.target" ];
+      wants = [ "network-online.target" ];
+      wantedBy = [ "multi-user.target" ];
       serviceConfig = {
         ExecStart = "${pkgs.cloudflared}/bin/cloudflared tunnel --no-autoupdate run --token-file %d/tunnel-token";
         LoadCredential = "tunnel-token:/var/lib/cloudflared/vaultwarden.token";
@@ -158,7 +160,7 @@ in {
   };
 
   users = {
-    groups.bws = {};
+    groups.bws = { };
     users.alta = {
       isNormalUser = true;
       extraGroups = [
@@ -169,12 +171,12 @@ in {
     };
     extraUsers = {
       alta.openssh.authorizedKeys.keys = [
-        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJu6go/Gdfcvom2fGVsGnZ8lVUYgeg0ujHCi8HCikU3o mykola.korniichuk.ua@gmail.com"
-        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMaEFydTkBViXJm0/JFThRvRthUm4j4RfZ3SL8GYoWDi mykola.korniichuk.ua@gmail.com"
+        "sk-ssh-ed25519@openssh.com AAAAGnNrLXNzaC1lZDI1NTE5QG9wZW5zc2guY29tAAAAIEuxsuGRgSwuYMG6qnRfp6PtKJeqiodnoBZfWjr60cVrAAAACnNzaDpiYWNrdXA= mykola.korniichuk.ua@gmail.com"
+        "sk-ssh-ed25519@openssh.com AAAAGnNrLXNzaC1lZDI1NTE5QG9wZW5zc2guY29tAAAAIDc5+1k9yIiEF0ri0vkNuKhh/bIqXiQI3Ew1uCY12gprAAAACHNzaDptYWlu mykola.korniichuk.ua@gmail.com"
       ];
       root.openssh.authorizedKeys.keys = [
-        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJu6go/Gdfcvom2fGVsGnZ8lVUYgeg0ujHCi8HCikU3o mykola.korniichuk.ua@gmail.com"
-        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMaEFydTkBViXJm0/JFThRvRthUm4j4RfZ3SL8GYoWDi mykola.korniichuk.ua@gmail.com"
+        "sk-ssh-ed25519@openssh.com AAAAGnNrLXNzaC1lZDI1NTE5QG9wZW5zc2guY29tAAAAIEuxsuGRgSwuYMG6qnRfp6PtKJeqiodnoBZfWjr60cVrAAAACnNzaDpiYWNrdXA= mykola.korniichuk.ua@gmail.com"
+        "sk-ssh-ed25519@openssh.com AAAAGnNrLXNzaC1lZDI1NTE5QG9wZW5zc2guY29tAAAAIDc5+1k9yIiEF0ri0vkNuKhh/bIqXiQI3Ew1uCY12gprAAAACHNzaDptYWlu mykola.korniichuk.ua@gmail.com"
       ];
     };
   };

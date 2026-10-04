@@ -5,8 +5,7 @@
   config,
   pkgs,
   ...
-}:
-let
+}: let
   bwsServerUrl = "https://vault.bitwarden.eu";
 
   bwsCli = pkgs.writeShellScriptBin "bws" ''
@@ -15,8 +14,7 @@ let
     export BWS_SERVER_URL="${bwsServerUrl}"
     exec ${pkgs.bws}/bin/bws "$@"
   '';
-in
-{
+in {
   imports = [
     ./hardware-configuration.nix
   ];
@@ -83,9 +81,9 @@ in
   systemd.services = {
     cloudflared-services = {
       description = "Cloudflare Tunnel for hosted services";
-      after = [ "network-online.target" ];
-      wants = [ "network-online.target" ];
-      wantedBy = [ "multi-user.target" ];
+      after = ["network-online.target"];
+      wants = ["network-online.target"];
+      wantedBy = ["multi-user.target"];
       serviceConfig = {
         ExecStart = "${pkgs.cloudflared}/bin/cloudflared tunnel --no-autoupdate run --token-file %d/tunnel-token";
         LoadCredential = "tunnel-token:/var/lib/cloudflared/vaultwarden.token";
@@ -160,7 +158,7 @@ in
   };
 
   users = {
-    groups.bws = { };
+    groups.bws = {};
     users.alta = {
       isNormalUser = true;
       extraGroups = [

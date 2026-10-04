@@ -17,7 +17,7 @@
     mkcert
     fnm
     tree-sitter
-    openssl_3
+    openssl
     ffmpeg-full
   ];
 }

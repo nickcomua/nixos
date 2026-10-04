@@ -1,12 +1,20 @@
 # NixOS host configuration
 {
   pkgs,
+  lib,
   inputs,
   config,
   ...
-}: let
+}:
+let
   sharedNix = import ../../modules/_shared-nix.nix;
-in {
+  applyDesktop = lib.hiPrio (
+    pkgs.writeShellScriptBin "nixarchy-apply" ''
+      exec /etc/profiles/per-user/nick/bin/nixarchy-config apply "$@"
+    ''
+  );
+in
+{
   imports = [
     ./hardware-configuration.nix
     ./apfs.nix
@@ -16,16 +24,54 @@ in {
     inputs.sops-nix.nixosModules.sops
     # Import program modules directly (prefixed with _ to exclude from auto-load)
     ../../modules/_programs/whisper-transcribe
+    ../../modules/_programs/tradingview
+    ../../modules/_programs/grok-bot
+    inputs.nixarchy.nixosModules.nixarchy
+    ../../../nixarchy-apps.nix
   ];
+
+  programs.nixarchy = {
+    enable = true;
+    user = "nick";
+    flake = "/home/nick/.config/nixos";
+    defaultAgent = null;
+    preinstalls = true;
+    displayManager = true;
+    bootSplash = "force";
+    shellIntegration = false;
+    bashIntegration = false;
+    binaryCaches = false;
+    package = (pkgs.extend inputs.nixarchy.overlays.default).omarchy.overrideAttrs (old: {
+      postPatch = (old.postPatch or "") + ''
+        substituteInPlace default/sddm/omarchy/Main.qml \
+          --replace-fail 'Keys.onPressed: {' 'Keys.onPressed: function(event) {'
+      '';
+    });
+    menu.extraEntries = {
+      "personal".label = "My configuration";
+      "personal.export" = {
+        label = "Save desktop to Nix";
+        action = "omarchy-launch-floating-terminal-with-presentation nixarchy-config export";
+      };
+      "personal.status" = {
+        label = "Unsaved desktop changes";
+        action = "omarchy-launch-floating-terminal-with-presentation nixarchy-config status";
+      };
+      "personal.restore" = {
+        label = "Restore saved desktop";
+        action = "omarchy-launch-floating-terminal-with-presentation nixarchy-config restore";
+      };
+    };
+  };
 
   # Sops secrets configuration
   sops = {
     defaultSopsFile = ../../../secrets.yaml;
     age.keyFile = "/home/nick/.config/sops/age/keys.txt";
     secrets = {
-      "openclaw-hooks-token" = {};
-      "gmail-push-token" = {};
-      "telegram-bot-token" = {};
+      "openclaw-hooks-token" = { };
+      "gmail-push-token" = { };
+      "telegram-bot-token" = { };
       "BWS_ACCESS_TOKEN" = {
         owner = "nick"; # Changes file owner to your user
         mode = "0400"; # Gives read-only access exclusively to the owner
@@ -49,11 +95,11 @@ in {
     extraModprobeConfig = ''
       options iwlmvm power_scheme=1
     '';
-    binfmt.emulatedSystems = ["aarch64-linux"];
+    binfmt.emulatedSystems = [ "aarch64-linux" ];
 
     loader.grub = {
       enable = true;
-      devices = ["nodev"];
+      devices = [ "nodev" ];
       efiInstallAsRemovable = true;
       efiSupport = true;
       useOSProber = true;
@@ -113,9 +159,9 @@ in {
       };
     };
 
-    displayManager.ly = {
-      enable = true;
-      # wayland.enable = true;
+    displayManager = {
+      defaultSession = "omarchy";
+      ly.enable = false;
     };
 
     avahi = {
@@ -137,7 +183,7 @@ in {
     #   listenAddress = "0.0.0.0:9000";
     # };
 
-    desktopManager.gnome.enable = true;
+    desktopManager.gnome.enable = false;
     printing.enable = true;
 
     # power-profiles-daemon is required by Noctalia for power profile controls
@@ -169,7 +215,16 @@ in {
       # Noctalia ideapad-battery-health plugin: grant battery_ctl group
       # write access to conservation_mode for BAT0
       SUBSYSTEM=="power_supply", KERNEL=="BAT0", RUN+="${pkgs.coreutils}/bin/chgrp battery_ctl /sys%p/extensions/ideapad_laptop/conservation_mode", RUN+="${pkgs.coreutils}/bin/chmod g+w /sys%p/extensions/ideapad_laptop/conservation_mode"
+
+      ACTION=="remove",\
+        ENV{ID_BUS}=="usb",\
+        ENV{ID_MODEL_ID}=="0407",\
+        ENV{ID_VENDOR_ID}=="1050",\
+        ENV{ID_VENDOR}=="Yubico",\
+        RUN+="${pkgs.systemd}/bin/loginctl lock-sessions"
     '';
+
+    udev.packages = [ pkgs.yubikey-personalization ];
   };
 
   # Hardware configuration
@@ -191,9 +246,9 @@ in {
   systemd.services = {
     voice-to-text-bot = {
       description = "Voice-to-Text Telegram Bot using Whisper";
-      after = ["network-online.target"];
-      wants = ["network-online.target"];
-      wantedBy = ["multi-user.target"];
+      after = [ "network-online.target" ];
+      wants = [ "network-online.target" ];
+      wantedBy = [ "multi-user.target" ];
       serviceConfig = {
         Type = "simple";
         User = "nick";
@@ -208,7 +263,7 @@ in {
 
     fix-i2c-permissions = {
       description = "Fix I2C device permissions for ddcutil";
-      wantedBy = ["multi-user.target"];
+      wantedBy = [ "multi-user.target" ];
       serviceConfig.Type = "oneshot";
       script = ''
         chmod 666 /dev/i2c-* 2>/dev/null || true
@@ -227,14 +282,17 @@ in {
   security = {
     rtkit.enable = true;
     pam.services = {
-      hyprlock = {};
+      hyprlock = { };
       gdm-password.enableGnomeKeyring = true;
+      login.u2fAuth = true;
+      sudo.u2fAuth = true;
     };
     polkit.enable = true;
+    polkit.enablePkexecWrapper = true;
   };
 
   # 2. Let NixOS inject the system's CA certificate bundle
-  security.pki.certificateFiles = [];
+  security.pki.certificateFiles = [ ];
 
   # Programs configuration
   programs = {
@@ -247,35 +305,21 @@ in {
       xwayland.enable = true;
     };
     kdeconnect.enable = true;
-    steam = {
-      enable = true;
-      package = pkgs.steam.override {
-        extraEnv = {
-          SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
-          SSL_CERT_DIR = "/etc/ssl/certs";
-          CURL_CA_BUNDLE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
-        };
-        extraProfile = ''
-          rm -rf /etc/ssl/certs /etc/pki
-          mkdir -p /etc/ssl/certs /etc/pki/tls/certs
-          ln -sf ${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt /etc/ssl/certs/ca-certificates.crt
-          ln -sf ${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt /etc/ssl/certs/ca-bundle.crt
-          ln -sf ${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt /etc/pki/tls/certs/ca-bundle.crt
-        '';
-      };
-      remotePlay.openFirewall = true;
-      dedicatedServer.openFirewall = true;
-    };
+    # Steam and its CA workaround are declared in the Nixarchy app selection.
     zsh.enable = true;
     firefox.enable = true;
     seahorse.enable = true;
+    gnupg.agent = {
+      enable = true;
+      enableSSHSupport = true;
+    };
   };
 
   users = {
     # Create i2c group if it doesn't exist
-    groups.i2c = {};
+    groups.i2c = { };
     # Battery conservation mode control (Noctalia ideapad-battery-health plugin)
-    groups.battery_ctl = {};
+    groups.battery_ctl = { };
 
     # Define a user account
     users.nick = {
@@ -296,6 +340,8 @@ in {
 
   # Enable home-manager for user
   home-manager = {
+    # Preserve mutable desktop files when Home Manager first takes ownership.
+    backupFileExtension = "hm-backup";
     users.nick = import ./nick.nix;
   };
 
@@ -307,6 +353,7 @@ in {
   # Environment configuration
   environment = {
     localBinInPath = true;
+    pathsToLink = [ "/share/omarchy" ];
     variables = {
       XDG_RUNTIME_DIR = "/run/user/$UID";
       BROWSER = "floorp";
@@ -318,6 +365,7 @@ in {
       set enable-bracketed-paste off
     '';
     systemPackages = with pkgs; [
+      applyDesktop
       vscode
       google-chrome
       floorp-bin

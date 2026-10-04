@@ -121,11 +121,10 @@ flake-parts/
     │   └── monitoring.nix
     └── home-manager/
         ├── default.nix      # Exports homeModules via importApply
-        ├── shared/          # Cross-platform (zsh, packages, clawdbot)
+        ├── shared/          # Cross-platform (zsh, packages)
         │   ├── default.nix
         │   ├── zsh.nix
-        │   ├── packages.nix
-        │   └── clawdbot.nix
+        │   └── packages.nix
         ├── linux/           # Linux-specific modules
         │   └── common.nix
         ├── darwin/          # macOS-specific modules
@@ -336,7 +335,6 @@ sops updatekeys secrets.yaml
 ### Build-Time vs Runtime Secrets
 
 - **Runtime secrets**: Use `config.sops.secrets."name".path` for services that read from files
-- **Build-time config values**: Use placeholder pattern with activation script substitution (see `clawdbot.nix` for example)
 
 ### Initial Setup on New Machine
 

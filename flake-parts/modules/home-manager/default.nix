@@ -28,7 +28,7 @@ in {
     # librepods = import ../_programs/librepods/home.nix;
 
     # Existing modules
-    wayland = importApply ./wayland {inherit localFlake inputs;};
+    nixarchy = ./nixarchy;
     # activitywatch = importApply ./services/activitywatch {inherit localFlake inputs;};
   };
 }

@@ -12,24 +12,15 @@
     # Create ~/.ssh/config.local and add any Host blocks there;
     # they will be picked up automatically without rebuilding.
     includes = ["~/.ssh/config.local"];
-    matchBlocks = {
-      "cyrus.kaminazuma.com" = {
-        hostname = "cyrus.kaminazuma.com";
-        user = "ubuntu";
-        forwardX11 = true;
-        forwardX11Trusted = true;
-      };
-      "kaminazuma.com" = {
-        hostname = "167.71.67.207";
-        user = "root";
-      };
+    settings = {
       "alta.local" = {
         hostname = "alta.local";
         user = "root";
       };
       "alta" = {
-        hostname = "kaminazuma.com";
+        hostname = "ssh.kaminazuma.com";
         user = "root";
+        proxyCommand = "${pkgs.cloudflared}/bin/cloudflared access ssh --hostname %h";
       };
     };
   };

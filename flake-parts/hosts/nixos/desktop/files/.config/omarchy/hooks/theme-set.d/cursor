@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+exec /nix/store/54g2yxdhdfpjvnyi060m6r2yc3gzxg51-omarchy-4.0.4/bin/omarchy-cursor-set

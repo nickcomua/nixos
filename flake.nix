@@ -49,7 +49,6 @@
     };
     vscode-server = {
       url = "github:nix-community/nixos-vscode-server";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
     ssd-doda-bot = {
       url = "github:nickcomua/ssd-doda-bot";
@@ -71,6 +70,20 @@
     };
 
     # --- MAIN PC SPECIFIC ---
+    nixarchy = {
+      url = "github:olafkfreund/nixarchy";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        # Hyprland dlopens the host Mesa driver: both must use the same glibc.
+        hyprland.inputs.nixpkgs.follows = "nixpkgs";
+        # The current nixpkgs hyprtoolkit requires hyprutils >= 0.14.2.
+        hyprland.inputs.hyprutils.url = "github:hyprwm/hyprutils/v0.14.2";
+        hyprland.inputs.hyprutils.inputs.nixpkgs.follows = "nixpkgs";
+        hyprland.inputs.hyprutils.inputs.systems.follows = "nixarchy/hyprland/systems";
+        home-manager.follows = "home-manager";
+        sops-nix.follows = "sops-nix";
+      };
+    };
     devenv = {
       url = "github:cachix/devenv";
       inputs.nixpkgs.follows = "nixpkgs";

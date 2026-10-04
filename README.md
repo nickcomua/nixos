@@ -6,7 +6,7 @@ Multi-system Nix configuration managing NixOS, macOS (nix-darwin), and Raspberry
 
 | Host | Platform | Description |
 |------|----------|-------------|
-| `nixos` | x86_64-linux | Main development machine with Hyprland |
+| `nixos` | x86_64-linux | Main development machine with Nixarchy/Omarchy |
 | `mykolas-macbook-pro` | aarch64-darwin | MacBook Pro with nix-darwin |
 | `alta` | aarch64-linux | Raspberry Pi deployment server |
 
@@ -61,7 +61,8 @@ flake-parts/
     │   ├── shared/          # Cross-platform (zsh, packages, openclaw)
     │   ├── linux/           # Linux-specific modules
     │   ├── darwin/          # macOS-specific modules
-    │   ├── wayland/         # Hyprland ecosystem
+    │   ├── nixarchy/        # Omarchy desktop and exportable customization
+    │   ├── wayland/         # Legacy desktop modules (not loaded)
     │   └── services/        # User services (activitywatch)
     ├── nixos/               # System-level NixOS modules
     └── _programs/           # Program modules (excluded from auto-load)
@@ -79,19 +80,18 @@ Home-manager modules are registered in `modules/home-manager/default.nix` and lo
 
 ## Key Features
 
-### Wayland/Hyprland
+### Nixarchy/Omarchy
 
-- Comprehensive Hyprland configuration with multi-monitor support
-- Adaptive brightness control (laptop + external DDC/CI monitors)
-- Hyprpanel, Hyprlock, Hypridle, Hyprpaper integration
-- Vicinae app launcher with clipboard history
-- Satty screenshot annotation
+- Hyprland Lua configuration with multi-monitor support
+- Quickshell status bar, launcher, notifications and desktop controls
+- Mutable personal configuration preserved across rebuilds
+- Desktop export/restore and declarative app selections
+- See [desktop configuration and recovery](docs/nixarchy.md)
 
 ### Cross-Platform
 
 - Shared zsh configuration with platform-specific extensions
 - Common packages across all systems
-- Clawdbot Telegram integration (macOS + NixOS)
 
 ### Hardware Support
 
@@ -148,7 +148,7 @@ Successful main branch builds promote to `stable-nixos`, `stable-alta`, `stable-
 nix develop
 
 # Format all nix files
-nix fmt
+nix fmt .
 
 # Lint
 nix run nixpkgs#statix -- check .

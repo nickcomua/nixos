@@ -70,6 +70,9 @@
     };
 
     # --- MAIN PC SPECIFIC ---
+    horse-browser = {
+      url = "git+ssh://git@github.com/nickcomua/horse-browser-nix.git?ref=main";
+    };
     nixarchy = {
       url = "github:olafkfreund/nixarchy";
       inputs = {

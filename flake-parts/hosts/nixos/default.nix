@@ -8,6 +8,12 @@
 }:
 let
   sharedNix = import ../../modules/_shared-nix.nix;
+  sshAskpass = pkgs.writeShellScript "ssh-askpass-with-touch" (
+    builtins.replaceStrings
+      [ "@askpass@" "@notify@" ]
+      [ "${pkgs.seahorse}/libexec/seahorse/ssh-askpass" "${pkgs.libnotify}/bin/notify-send" ]
+      (builtins.readFile ./ssh-askpass.sh)
+  );
   kleopatra = pkgs.symlinkJoin {
     name = "kleopatra-with-gtk-schemas";
     paths = [ pkgs.kdePackages.kleopatra ];
@@ -136,10 +142,19 @@ in
       enable = true;
       settings.connection."wifi.powersave" = 2;
     };
-    firewall.allowedTCPPorts = [
-      9000
-      9001
-    ];
+    firewall = {
+      allowedTCPPorts = [
+        9000
+        9001
+      ];
+      # Hermes Android: only the current trusted Wi-Fi LAN, not other interfaces.
+      extraCommands = ''
+        iptables -w -I nixos-fw 1 -i wlp6s0 -s 192.168.1.0/24 -p tcp --dport 8642 -j nixos-fw-accept
+      '';
+      extraStopCommands = ''
+        iptables -w -D nixos-fw -i wlp6s0 -s 192.168.1.0/24 -p tcp --dport 8642 -j nixos-fw-accept 2>/dev/null || true
+      '';
+    };
   };
 
   # Set your time zone
@@ -335,7 +350,7 @@ in
     after = [ "graphical-session-pre.target" "wayland-session-waitenv.service" ];
     partOf = [ "graphical-session.target" ];
     environment = {
-      SSH_ASKPASS = "${pkgs.seahorse}/libexec/seahorse/ssh-askpass";
+      SSH_ASKPASS = "${sshAskpass}";
       SSH_ASKPASS_REQUIRE = "force";
     };
   };
@@ -350,7 +365,23 @@ in
     # horse-browser.enable = true;
     # librepods.enable = true;
     whisper-transcribe.enable = true;
-    nix-ld.enable = true;
+    nix-ld = {
+      enable = true;
+      # Runtime libraries for unpacked Electron apps such as Hermes Desktop.
+      libraries = with pkgs; [
+        dbus
+        at-spi2-core
+        cups
+        cairo
+        gtk3
+        pango
+        libxcomposite
+        libxdamage
+        libxfixes
+        libgbm
+        expat
+      ];
+    };
     hyprland = {
       enable = true;
       xwayland.enable = true;
@@ -423,6 +454,7 @@ in
       vscode
       google-chrome
       floorp-bin
+      inputs.horse-browser.packages.${pkgs.stdenv.hostPlatform.system}.default
       ghostty
       direnv
       bubblewrap

@@ -73,6 +73,9 @@ in
     openssh = {
       enable = true;
       settings = {
+        # Allow GUI applications on this headless host over SSH; NixOS also
+        # supplies the matching xauth store path to sshd.
+        X11Forwarding = true;
         PasswordAuthentication = false;
         KbdInteractiveAuthentication = false;
         PermitRootLogin = "yes";

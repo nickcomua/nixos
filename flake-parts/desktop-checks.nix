@@ -58,6 +58,7 @@
           export NIX_STATE_DIR="$TMPDIR/nix-state"
           export NIX_REMOTE=dummy://
           python3 -B -m unittest discover -s tests -p 'test_nixarchy_config.py'
+          python3 -B -m unittest discover -s tests -p 'test_ssh_askpass.py'
           OMARCHY_SOURCE=${inputs.nixarchy.inputs.omarchy} python3 -B -m unittest discover -s tests -p 'test_omarchy_auth.py'
           OMARCHY_SOURCE=${inputs.nixarchy.inputs.omarchy} lua tests/nixarchy-bindings.lua
             touch "$out"

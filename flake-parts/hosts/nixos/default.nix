@@ -8,6 +8,12 @@
 }:
 let
   sharedNix = import ../../modules/_shared-nix.nix;
+  sshAskpass = pkgs.writeShellScript "ssh-askpass-with-touch" (
+    builtins.replaceStrings
+      [ "@askpass@" "@notify@" ]
+      [ "${pkgs.seahorse}/libexec/seahorse/ssh-askpass" "${pkgs.libnotify}/bin/notify-send" ]
+      (builtins.readFile ./ssh-askpass.sh)
+  );
   kleopatra = pkgs.symlinkJoin {
     name = "kleopatra-with-gtk-schemas";
     paths = [ pkgs.kdePackages.kleopatra ];
@@ -335,7 +341,7 @@ in
     after = [ "graphical-session-pre.target" "wayland-session-waitenv.service" ];
     partOf = [ "graphical-session.target" ];
     environment = {
-      SSH_ASKPASS = "${pkgs.seahorse}/libexec/seahorse/ssh-askpass";
+      SSH_ASKPASS = "${sshAskpass}";
       SSH_ASKPASS_REQUIRE = "force";
     };
   };

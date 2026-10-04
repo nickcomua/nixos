@@ -8,6 +8,16 @@
 }:
 let
   sharedNix = import ../../modules/_shared-nix.nix;
+  kleopatra = pkgs.symlinkJoin {
+    name = "kleopatra-with-gtk-schemas";
+    paths = [ pkgs.kdePackages.kleopatra ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      # The desktop's GTK Qt theme needs GTK schemas for native file dialogs.
+      wrapProgram "$out/bin/kleopatra" \
+        --prefix XDG_DATA_DIRS : "${pkgs.gtk3}/share/gsettings-schemas/${pkgs.gtk3.name}"
+    '';
+  };
   applyDesktop = lib.hiPrio (
     pkgs.writeShellScriptBin "nixarchy-apply" ''
       exec /etc/profiles/per-user/nick/bin/nixarchy-config apply "$@"
@@ -42,10 +52,13 @@ in
     bashIntegration = false;
     binaryCaches = false;
     package = (pkgs.extend inputs.nixarchy.overlays.default).omarchy.overrideAttrs (old: {
-      postPatch = (old.postPatch or "") + ''
-        substituteInPlace default/sddm/omarchy/Main.qml \
-          --replace-fail 'Keys.onPressed: {' 'Keys.onPressed: function(event) {'
-      '';
+      postPatch =
+        (old.postPatch or "")
+        + ''
+          substituteInPlace default/sddm/omarchy/Main.qml \
+            --replace-fail 'Keys.onPressed: {' 'Keys.onPressed: function(event) {'
+          ${pkgs.python3}/bin/python3 ${./patch-omarchy-auth.py} .
+        '';
     });
     menu.extraEntries = {
       "personal".label = "My configuration";
@@ -225,6 +238,8 @@ in
     '';
 
     udev.packages = [ pkgs.yubikey-personalization ];
+
+    pcscd.enable = true;
   };
 
   # Hardware configuration
@@ -244,6 +259,15 @@ in
 
   # Systemd services
   systemd.services = {
+    "polkit-agent-helper@".serviceConfig = {
+      # Polkit 127 authenticates in an isolated helper. Permit FIDO HID I/O
+      # and bind only the public enrollment file into otherwise hidden homes.
+      PrivateDevices = false;
+      # pam_u2f reads urandom to generate its authentication challenge.
+      DeviceAllow = ["char-hidraw rw" "/dev/urandom r"];
+      ProtectHome = "tmpfs";
+      BindReadOnlyPaths = ["/home/nick/.config/Yubico/u2f_keys"];
+    };
     voice-to-text-bot = {
       description = "Voice-to-Text Telegram Bot using Whisper";
       after = [ "network-online.target" ];
@@ -281,8 +305,18 @@ in
   # Security settings
   security = {
     rtkit.enable = true;
+    pam.u2f.settings.cue = true;
     pam.services = {
-      hyprlock = { };
+      hyprlock.u2fAuth = true;
+      polkit-1.u2fAuth = true;
+
+      # The shell starts this key-only stack in parallel with its password stack.
+      # Denial remains mandatory if U2F fails; never add nouserok here.
+      omarchy-lock-u2f = {
+        u2fAuth = true;
+        unixAuth = false;
+        fprintAuth = false;
+      };
       gdm-password.enableGnomeKeyring = true;
       login.u2fAuth = true;
       sudo.u2fAuth = true;
@@ -293,6 +327,23 @@ in
 
   # 2. Let NixOS inject the system's CA certificate bundle
   security.pki.certificateFiles = [ ];
+
+  # FIDO signing requires PIN prompts from the live graphical session.
+  # UWSM imports DISPLAY/WAYLAND_DISPLAY before its waitenv service completes.
+  systemd.user.services.gcr-ssh-agent = {
+    wantedBy = lib.mkForce [ "graphical-session.target" ];
+    after = [ "graphical-session-pre.target" "wayland-session-waitenv.service" ];
+    partOf = [ "graphical-session.target" ];
+    environment = {
+      SSH_ASKPASS = "${pkgs.seahorse}/libexec/seahorse/ssh-askpass";
+      SSH_ASKPASS_REQUIRE = "force";
+    };
+  };
+  systemd.user.sockets.gcr-ssh-agent = {
+    wantedBy = lib.mkForce [ "graphical-session.target" ];
+    after = [ "wayland-session-waitenv.service" ];
+    partOf = [ "graphical-session.target" ];
+  };
 
   # Programs configuration
   programs = {
@@ -311,7 +362,8 @@ in
     seahorse.enable = true;
     gnupg.agent = {
       enable = true;
-      enableSSHSupport = true;
+      enableExtraSocket = true;
+      # enableSSHSupport = true; # its braking fido
     };
   };
 
@@ -366,6 +418,8 @@ in
     '';
     systemPackages = with pkgs; [
       applyDesktop
+      yubioath-flutter
+      kleopatra
       vscode
       google-chrome
       floorp-bin

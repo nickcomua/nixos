@@ -35,6 +35,25 @@
       exec python3 ${./config.py} "$@"
     '';
   };
+  logindLock = pkgs.writeShellApplication {
+    name = "omarchy-logind-lock";
+    runtimeInputs = [pkgs.dbus pkgs.systemd];
+    text = ''
+      # Follow only this graphical session, not another user's lock requests.
+      session="''${XDG_SESSION_ID:?Missing graphical session ID}"
+      session_path=$(busctl call org.freedesktop.login1 /org/freedesktop/login1 \
+        org.freedesktop.login1.Manager GetSession s "$session")
+      session_path="''${session_path#o \"}"
+      session_path="''${session_path%\"}"
+      dbus-monitor --system \
+        "type='signal',sender='org.freedesktop.login1',path='$session_path',interface='org.freedesktop.login1.Session',member='Lock'" \
+        | while IFS= read -r event; do
+          if [[ "$event" == signal\ * && "$event" == *"interface=org.freedesktop.login1.Session; member=Lock" ]]; then
+            /run/current-system/sw/bin/omarchy-shell lock lock
+          fi
+        done
+    '';
+  };
 in {
   imports = [inputs.nixarchy.homeManagerModules.nixarchy];
   programs.nixarchy = {
@@ -60,4 +79,17 @@ in {
   # The repository is already managed with jj; upstream's Git setup wizard
   # must not offer to initialize or commit it on login.
   xdg.configFile."omarchy/hooks/post-boot.d/config-repo".enable = false;
+  systemd.user.services.omarchy-logind-lock = {
+    Unit = {
+      Description = "Forward logind lock requests to the Omarchy lock screen";
+      After = ["graphical-session.target"];
+      PartOf = ["graphical-session.target"];
+    };
+    Service = {
+      ExecStart = "${logindLock}/bin/omarchy-logind-lock";
+      Restart = "on-failure";
+      RestartSec = 2;
+    };
+    Install.WantedBy = ["graphical-session.target"];
+  };
 }

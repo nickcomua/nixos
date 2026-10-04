@@ -71,9 +71,14 @@ in {
     openssh = {
       enable = true;
       settings = {
+        # Allow GUI applications on this headless host over SSH; NixOS also
+        # supplies the matching xauth store path to sshd.
+        X11Forwarding = true;
         PasswordAuthentication = false;
         KbdInteractiveAuthentication = false;
         PermitRootLogin = "yes";
+        # Replace stale Unix sockets when reconnecting with GPG forwarding.
+        StreamLocalBindUnlink = "yes";
       };
     };
   };
@@ -155,7 +160,16 @@ in {
   programs = {
     direnv.enable = true;
     nix-ld.enable = true;
+    gnupg.agent = {
+      enable = true;
+      enableExtraSocket = true;
+    };
   };
+
+  # Do not let remote GPG spawn an agent over the forwarded socket.
+  environment.etc."gnupg/gpg.conf".text = ''
+    no-autostart
+  '';
 
   users = {
     groups.bws = {};

@@ -3,27 +3,17 @@
 # https://search.nixos.org/options and in the NixOS manual (`nixos-help`).
 {
   config,
-  lib,
   pkgs,
   ...
 }: let
-  holesail = pkgs.stdenv.mkDerivation {
-    pname = "holesail";
-    version = "2.4.1";
+  bwsServerUrl = "https://vault.bitwarden.eu";
 
-    src = pkgs.fetchurl {
-      url = "https://github.com/holesail/holesail/releases/download/2.4.1/linux-arm64.zip";
-      hash = "sha256-NMWZdPFM3agA6bx8v0oe5oc+U4r1qLtafEh1hJbFqN4=";
-    };
-
-    nativeBuildInputs = [pkgs.unzip];
-    dontUnpack = true;
-
-    installPhase = ''
-      unzip "$src" -d release
-      install -Dm755 "$(find release -type f -name holesail -print -quit)" "$out/bin/holesail"
-    '';
-  };
+  bwsCli = pkgs.writeShellScriptBin "bws" ''
+    set -euo pipefail
+    export BWS_ACCESS_TOKEN="$(${pkgs.coreutils}/bin/cat ${config.sops.secrets.BWS_ACCESS_TOKEN.path})"
+    export BWS_SERVER_URL="${bwsServerUrl}"
+    exec ${pkgs.bws}/bin/bws "$@"
+  '';
 in {
   imports = [
     ./hardware-configuration.nix
@@ -58,6 +48,14 @@ in {
     };
     resolved.enable = true;
 
+    actual = {
+      enable = true;
+      settings = {
+        hostname = "127.0.0.1";
+        port = 5006;
+      };
+    };
+
     # Assign the USB host 192.168.7.1 so Alta is always reachable at
     # 192.168.7.2 without relying on Ethernet, mDNS, or internet access.
     dnsmasq = {
@@ -80,88 +78,23 @@ in {
     };
   };
 
-  systemd.services.holesail-ssh = {
-    description = "Expose Alta SSH through Holesail";
-    after = [
-      "network-online.target"
-      "sshd.service"
-    ];
-    wants = ["network-online.target"];
-    requires = ["sshd.service"];
-    wantedBy = ["multi-user.target"];
-
-    preStart = ''
-      umask 077
-      export BWS_ACCESS_TOKEN="$(${pkgs.coreutils}/bin/cat ${config.sops.secrets.BWS_ACCESS_TOKEN.path})"
-      export BWS_SERVER_URL="https://vault.bitwarden.eu"
-
-      ${pkgs.bws}/bin/bws secret get \
-        f197f4ae-b8ae-4f9a-998d-b4b00156fb3a \
-        --output json \
-        | ${pkgs.jq}/bin/jq --exit-status --raw-output '.value | select(length > 0)' \
-        > /run/holesail-ssh/connection-key
-    '';
-
-    script = ''
-      exec ${holesail}/bin/holesail \
-        --live 22 \
-        --host 127.0.0.1 \
-        --key "$(${pkgs.coreutils}/bin/cat /run/holesail-ssh/connection-key)"
-    '';
-
-    serviceConfig = {
-      Type = "simple";
-      RuntimeDirectory = "holesail-ssh";
-      RuntimeDirectoryMode = "0700";
-      Restart = "on-failure";
-      RestartSec = "10s";
-      StandardOutput = "null";
-
-      # Holesail needs outbound networking only; SSH stays bound to localhost.
-      NoNewPrivileges = true;
-      PrivateTmp = true;
-      ProtectHome = true;
-      ProtectSystem = "strict";
-    };
-  };
-
-  systemd.services.home-assistant-holesail = {
-    description = "Expose Home Assistant through Holesail";
-    after = [
-      "network-online.target"
-      "home-assistant.service"
-    ];
-    wants = ["network-online.target"];
-    requires = ["home-assistant.service"];
-    wantedBy = ["multi-user.target"];
-
-    preStart = ''
-      ${pkgs.coreutils}/bin/install \
-        --mode 0600 \
-        ${config.sops.secrets.home-assistant-holesail-key.path} \
-        /run/home-assistant-holesail/connection-key
-    '';
-
-    script = ''
-      exec ${holesail}/bin/holesail \
-        --live 8123 \
-        --host 127.0.0.1 \
-        --key "$(${pkgs.coreutils}/bin/cat /run/home-assistant-holesail/connection-key)" \
-        --log
-    '';
-
-    serviceConfig = {
-      Type = "simple";
-      RuntimeDirectory = "home-assistant-holesail";
-      RuntimeDirectoryMode = "0700";
-      Restart = "on-failure";
-      RestartSec = "10s";
-      StandardOutput = "null";
-
-      NoNewPrivileges = true;
-      PrivateTmp = true;
-      ProtectHome = true;
-      ProtectSystem = "strict";
+  systemd.services = {
+    cloudflared-services = {
+      description = "Cloudflare Tunnel for hosted services";
+      after = ["network-online.target"];
+      wants = ["network-online.target"];
+      wantedBy = ["multi-user.target"];
+      serviceConfig = {
+        ExecStart = "${pkgs.cloudflared}/bin/cloudflared tunnel --no-autoupdate run --token-file %d/tunnel-token";
+        LoadCredential = "tunnel-token:/var/lib/cloudflared/vaultwarden.token";
+        Restart = "on-failure";
+        RestartSec = "5s";
+        DynamicUser = true;
+        NoNewPrivileges = true;
+        PrivateTmp = true;
+        ProtectHome = true;
+        ProtectSystem = "strict";
+      };
     };
   };
 
@@ -202,6 +135,7 @@ in {
   };
 
   environment.systemPackages = with pkgs; [
+    bwsCli
     git
     jujutsu
     gg-jj
@@ -210,15 +144,25 @@ in {
     nftables
   ];
 
+  # The remaining Home Assistant YAML is intentionally user-managed.
+  environment.etc."home-assistant/http.yaml".text = ''
+    use_x_forwarded_for: true
+    trusted_proxies:
+      - 127.0.0.1
+      - "::1"
+  '';
+
   programs = {
     direnv.enable = true;
     nix-ld.enable = true;
   };
 
   users = {
+    groups.bws = {};
     users.alta = {
       isNormalUser = true;
       extraGroups = [
+        "bws"
         "wheel"
       ];
       password = "     ";

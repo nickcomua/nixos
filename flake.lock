@@ -724,11 +724,11 @@
         "nixpkgs": "nixpkgs_2"
       },
       "locked": {
-        "lastModified": 1791623067,
-        "narHash": "sha256-9XxY4bgK+5NMsD8Kxi0e1aVk3Nyl3NNhMiZAL0x8fZQ=",
+        "lastModified": 1791630208,
+        "narHash": "sha256-qY6PhoU7NwUTw2GO8dV1lB2h16BsPnVHjuqsQ5hlOio=",
         "ref": "main",
-        "rev": "8b50fef84c3c3abd76bf47171b6325b1fe96e33f",
-        "revCount": 1,
+        "rev": "237c6adc8b31dbc301c2406b7d6af752bf2bb808",
+        "revCount": 3,
         "type": "git",
         "url": "ssh://git@github.com/nickcomua/horse-browser-nix.git"
       },

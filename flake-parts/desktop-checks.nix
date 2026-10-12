@@ -10,6 +10,21 @@
     ...
   }: {
     checks = lib.optionalAttrs (system == "x86_64-linux") {
+      ssh-agent-config = let
+        host = self.nixosConfigurations.nixos.config;
+      in
+        pkgs.runCommand "ssh-agent-config-tests" {
+          nativeBuildInputs = [pkgs.python3 pkgs.openssh];
+          SSH_AGENT_CONFIG = pkgs.writeText "ssh-agent-config.json" (builtins.toJSON {
+            session = host.environment.etc."xdg/uwsm/env.d/ssh-agent.sh".text;
+            shell = host.environment.extraInit;
+            zsh = host.programs.zsh.shellInit;
+            ssh = host.programs.ssh.extraConfig;
+          });
+        } ''
+          python3 -B ${../tests/test_ssh_agent_config.py}
+          touch "$out"
+        '';
       desktop-runtime = let
         host = self.nixosConfigurations.nixos.config;
         files = host.home-manager.users.nick.xdg.configFile;

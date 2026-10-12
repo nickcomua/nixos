@@ -30,6 +30,7 @@ in
         forwardX11 = true;
         forwardX11Trusted = true;
         RemoteForward = gpgRemoteForward;
+        LocalForward = "33143 localhost:33143";
       };
       "alta" = {
         hostname = "ssh.kaminazuma.com";
@@ -39,6 +40,7 @@ in
         forwardX11 = true;
         forwardX11Trusted = true;
         RemoteForward = gpgRemoteForward;
+        LocalForward = "33143 localhost:33143";
       };
     };
   };

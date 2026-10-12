@@ -8,6 +8,12 @@
 }:
 let
   sharedNix = import ../../modules/_shared-nix.nix;
+  sshAgentEnvironment = ''
+    # Preserve forwarded/custom agents; publish GCR before desktop apps start.
+    if [ -z "''${SSH_AUTH_SOCK:-}" ] && [ -n "''${XDG_RUNTIME_DIR:-}" ]; then
+      export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/gcr/ssh"
+    fi
+  '';
   sshAskpass = pkgs.writeShellScript "ssh-askpass-with-touch" (
     builtins.replaceStrings
       [ "@askpass@" "@notify@" ]
@@ -34,6 +40,8 @@ in
   imports = [
     ./hardware-configuration.nix
     ./apfs.nix
+    ./rea-tools.nix
+    ./desktop-memory.nix
     # Determinate Nix for consistent nix daemon management
     inputs.determinate.nixosModules.default
     # Sops for secrets management
@@ -150,9 +158,14 @@ in
       # Hermes Android: only the current trusted Wi-Fi LAN, not other interfaces.
       extraCommands = ''
         iptables -w -I nixos-fw 1 -i wlp6s0 -s 192.168.1.0/24 -p tcp --dport 8642 -j nixos-fw-accept
+        # Cactus microphone WebSocket: trusted wired LAN and USB only.
+        iptables -w -C nixos-fw -i enp5s0 -s 192.168.1.0/24 -p tcp --dport 18765 -j nixos-fw-accept 2>/dev/null || iptables -w -I nixos-fw 1 -i enp5s0 -s 192.168.1.0/24 -p tcp --dport 18765 -j nixos-fw-accept
+        iptables -w -C nixos-fw -i enp8s0f3u+ -s 172.16.42.0/24 -p tcp --dport 18765 -j nixos-fw-accept 2>/dev/null || iptables -w -I nixos-fw 1 -i enp8s0f3u+ -s 172.16.42.0/24 -p tcp --dport 18765 -j nixos-fw-accept
       '';
       extraStopCommands = ''
         iptables -w -D nixos-fw -i wlp6s0 -s 192.168.1.0/24 -p tcp --dport 8642 -j nixos-fw-accept 2>/dev/null || true
+        iptables -w -D nixos-fw -i enp5s0 -s 192.168.1.0/24 -p tcp --dport 18765 -j nixos-fw-accept 2>/dev/null || true
+        iptables -w -D nixos-fw -i enp8s0f3u+ -s 172.16.42.0/24 -p tcp --dport 18765 -j nixos-fw-accept 2>/dev/null || true
       '';
     };
   };
@@ -344,6 +357,21 @@ in
   security.pki.certificateFiles = [ ];
 
   # FIDO signing requires PIN prompts from the live graphical session.
+  # Socket discovery must happen before the compositor, not in GCR's late
+  # socket ExecStartPost, which only updates the systemd user manager.
+  environment.etc."xdg/uwsm/env.d/ssh-agent.sh".text = sshAgentEnvironment;
+  # New shells in an older desktop session also recover the missing variable.
+  environment.extraInit = sshAgentEnvironment;
+  # Also run when an old session's __NIXOS_SET_ENVIRONMENT_DONE guard causes
+  # zsh to skip the global environment setup.
+  programs.zsh.shellInit = sshAgentEnvironment;
+  # SSH still finds GCR in applications that never source shell/session setup.
+  # Keep forwarded/custom agents and per-user IdentityAgent overrides intact.
+  programs.ssh.extraConfig = ''
+    Match exec "test -z \"$SSH_AUTH_SOCK\""
+      IdentityAgent /run/user/%i/gcr/ssh
+    Match all
+  '';
   # UWSM imports DISPLAY/WAYLAND_DISPLAY before its waitenv service completes.
   systemd.user.services.gcr-ssh-agent = {
     wantedBy = lib.mkForce [ "graphical-session.target" ];
@@ -495,6 +523,11 @@ in
 
       sops
       age
+
+      proton-vpn
+
+      qbittorrent
+      vlc
     ];
   };
 

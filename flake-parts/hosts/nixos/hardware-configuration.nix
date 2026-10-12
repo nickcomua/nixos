@@ -54,16 +54,8 @@
     };
 
     "/run/media/nick/D" = {
-      device = "/dev/disk/by-label/D";
-      fsType = "ntfs";
-      options = [
-        "rw"
-        "nofail"
-      ];
-    };
-
-    "/run/media/nick/AI" = {
-      device = "/dev/disk/by-label/AI";
+      # Former AI filesystem; UUID remains stable when its label changes to D.
+      device = "/dev/disk/by-uuid/3b66003f-15b0-4474-96b8-55ac3ede0b6d";
       fsType = "btrfs";
       options = ["nofail"];
     };

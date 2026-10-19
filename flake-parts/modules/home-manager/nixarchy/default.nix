@@ -35,6 +35,14 @@
       exec python3 ${./config.py} "$@"
     '';
   };
+  # Extra collectors for the Omarchy agents panel (Grok + Muse tabs).
+  # omarchy-agent-usage-update is patched (hosts/nixos) to also discover
+  # collectors from the per-user profile bin, not only $OMARCHY_PATH/bin.
+  agentUsageScript = pkgs.writeText "omarchy-agent-usage-hermes.py" (builtins.readFile ./agent-usage.py);
+  mkAgentCollector = id:
+    pkgs.writeShellScriptBin "omarchy-agent-usage-${id}" ''
+      exec ${pkgs.python3}/bin/python3 ${agentUsageScript} ${id} "$@"
+    '';
   logindLock = pkgs.writeShellApplication {
     name = "omarchy-logind-lock";
     runtimeInputs = [pkgs.dbus pkgs.systemd];
@@ -59,9 +67,23 @@ in {
   programs.nixarchy = {
     enable = true;
     defaultTheme = "tokyo-night";
+    # Same patched Omarchy as the system package (hosts/nixos): the
+    # home-manager module otherwise installs an unpatched copy whose
+    # omarchy-agent-usage-update shadows the system one in the user
+    # profile and never discovers the Grok/Muse collectors above.
+    package = (pkgs.extend inputs.nixarchy.overlays.default).omarchy.overrideAttrs (old: {
+      postPatch =
+        (old.postPatch or "")
+        + ''
+          substituteInPlace default/sddm/omarchy/Main.qml \
+            --replace-fail 'Keys.onPressed: {' 'Keys.onPressed: function(event) {'
+          ${pkgs.python3}/bin/python3 ${../../../hosts/nixos/patch-omarchy-auth.py} .
+          ${pkgs.python3}/bin/python3 ${../../../hosts/nixos/patch-omarchy-agent-usage.py} .
+        '';
+    });
   };
   home = {
-    packages = [configTool];
+    packages = [configTool (mkAgentCollector "grok") (mkAgentCollector "muse")];
     sessionVariables = {
       NIXARCHY_FLAKE = "/home/nick/.config/nixos";
       NH_ELEVATION_STRATEGY = "/run/wrappers/bin/pkexec";

@@ -3,6 +3,7 @@
   lib,
   pkgs,
   inputs,
+  osConfig,
   ...
 }: let
   snapshot = ../../../hosts/nixos/desktop;
@@ -35,14 +36,7 @@
       exec python3 ${./config.py} "$@"
     '';
   };
-  # Extra collectors for the Omarchy agents panel (Grok + Muse tabs).
-  # omarchy-agent-usage-update is patched (hosts/nixos) to also discover
-  # collectors from the per-user profile bin, not only $OMARCHY_PATH/bin.
-  agentUsageScript = pkgs.writeText "omarchy-agent-usage-hermes.py" (builtins.readFile ./agent-usage.py);
-  mkAgentCollector = id:
-    pkgs.writeShellScriptBin "omarchy-agent-usage-${id}" ''
-      exec ${pkgs.python3}/bin/python3 ${agentUsageScript} ${id} "$@"
-    '';
+  omarchyTree = osConfig.programs.nixarchy.tree or "${config.programs.nixarchy.package}/share/omarchy";
   logindLock = pkgs.writeShellApplication {
     name = "omarchy-logind-lock";
     runtimeInputs = [pkgs.dbus pkgs.systemd];
@@ -68,9 +62,9 @@ in {
     enable = true;
     defaultTheme = "tokyo-night";
     # Same patched Omarchy as the system package (hosts/nixos): the
-    # home-manager module otherwise installs an unpatched copy whose
-    # omarchy-agent-usage-update shadows the system one in the user
-    # profile and never discovers the Grok/Muse collectors above.
+    # home-manager module otherwise installs an unpatched copy in the user
+    # profile. The agents panel is a user plugin clone (nick.agents in the
+    # desktop snapshot), so no collector discovery patch is needed here.
     package = (pkgs.extend inputs.nixarchy.overlays.default).omarchy.overrideAttrs (old: {
       postPatch =
         (old.postPatch or "")
@@ -78,12 +72,11 @@ in {
           substituteInPlace default/sddm/omarchy/Main.qml \
             --replace-fail 'Keys.onPressed: {' 'Keys.onPressed: function(event) {'
           ${pkgs.python3}/bin/python3 ${../../../hosts/nixos/patch-omarchy-auth.py} .
-          ${pkgs.python3}/bin/python3 ${../../../hosts/nixos/patch-omarchy-agent-usage.py} .
         '';
     });
   };
   home = {
-    packages = [configTool (mkAgentCollector "grok") (mkAgentCollector "muse")];
+    packages = [configTool];
     sessionVariables = {
       NIXARCHY_FLAKE = "/home/nick/.config/nixos";
       NH_ELEVATION_STRATEGY = "/run/wrappers/bin/pkexec";
@@ -94,6 +87,42 @@ in {
     # Existing mutable files are never overwritten on ordinary rebuilds.
     activation.nixarchyDesktop = lib.hm.dag.entryBetween ["nixarchySeed" "linkGeneration"] ["writeBoundary"] ''
       run ${configTool}/bin/nixarchy-config seed
+    '';
+    # The graphical session bakes OMARCHY_PATH into the session launcher at
+    # build time, so after a switch the running Hyprland/systemd session
+    # still points at the previous Omarchy tree and keybinds such as
+    # Super+Space spawn commands from the old tree. Point the live session
+    # at this generation's tree and restart the shell onto it. Best effort:
+    # never fail activation when no graphical session is running.
+    activation.nixarchySessionEnv = lib.hm.dag.entryAfter ["writeBoundary"] ''
+      runtimeDir="/run/user/$(id -u)"
+      export XDG_RUNTIME_DIR="$runtimeDir"
+      export DBUS_SESSION_BUS_ADDRESS="unix:path=$runtimeDir/bus"
+      systemctl=${pkgs.systemd}/bin/systemctl
+      currentOmarchyPath=$($systemctl --user show-environment 2>/dev/null | sed -n 's/^OMARCHY_PATH=//p' | tail -n 1)
+      if [[ "$currentOmarchyPath" != "${omarchyTree}" ]]; then
+        # omarchy-restart-shell kills the config named by the *new* session
+        # environment, so stop the previous tree's shell explicitly first.
+        if [[ -n "$currentOmarchyPath" && -d "$currentOmarchyPath/shell" ]]; then
+          while timeout 5 /run/current-system/sw/bin/quickshell kill -p "$currentOmarchyPath/shell" --any-display >/dev/null 2>&1; do :; done
+        fi
+        currentPath=$($systemctl --user show-environment 2>/dev/null | sed -n 's/^PATH=//p' | tail -n 1)
+        newPath="${omarchyTree}/bin"
+        IFS=: read -r -a pathParts <<< "$currentPath"
+        for part in "''${pathParts[@]}"; do
+          if [[ -n "$part" && "$part" != *nixarchy-omarchy-tree/bin ]]; then
+            newPath="$newPath:$part"
+          fi
+        done
+        $systemctl --user set-environment "OMARCHY_PATH=${omarchyTree}" "PATH=$newPath" || true
+        hyprDir=$(find "$runtimeDir/hypr" -mindepth 1 -maxdepth 1 -type d -printf '%T@ %p\n' 2>/dev/null | sort -n | tail -n 1 | cut -d' ' -f2-)
+        if [[ -n "$hyprDir" ]]; then
+          export HYPRLAND_INSTANCE_SIGNATURE="''${hyprDir##*/}"
+          /run/current-system/sw/bin/hyprctl eval "hl.env('OMARCHY_PATH', '${omarchyTree}')" >/dev/null 2>&1 || true
+          /run/current-system/sw/bin/hyprctl eval "hl.env('PATH', '$newPath')" >/dev/null 2>&1 || true
+          env "OMARCHY_PATH=${omarchyTree}" "PATH=$newPath" "${omarchyTree}/bin/omarchy-restart-shell" >/dev/null 2>&1 || true
+        fi
+      fi
     '';
     # Seed the default agent once; subsequent UI changes belong to the user.
     activation.nixarchyDefaultAgent = lib.mkForce (lib.hm.dag.entryAfter ["writeBoundary"] "");

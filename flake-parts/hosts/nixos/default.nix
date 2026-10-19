@@ -72,7 +72,6 @@ in
           substituteInPlace default/sddm/omarchy/Main.qml \
             --replace-fail 'Keys.onPressed: {' 'Keys.onPressed: function(event) {'
           ${pkgs.python3}/bin/python3 ${./patch-omarchy-auth.py} .
-          ${pkgs.python3}/bin/python3 ${./patch-omarchy-agent-usage.py} .
         '';
     });
     menu.extraEntries = {

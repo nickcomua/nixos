@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+# Regenerate usage records for this plugin.
+#
+# Claude Code, Codex, and Fireworks still use Omarchy's first-party
+# collectors from $OMARCHY_PATH/bin. Grok and Muse use the collectors in
+# this plugin because upstream does not ship collectors for them. Nothing
+# in the Omarchy tree is modified.
+
+set -u
+
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+USAGE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/omarchy/agents/usage"
+mkdir -p "$USAGE_DIR"
+
+PYTHON=$(command -v python3 || true)
+if [[ -z $PYTHON && -x /run/current-system/sw/bin/python3 ]]; then
+  PYTHON=/run/current-system/sw/bin/python3
+fi
+if [[ -z $PYTHON ]]; then
+  echo "nick-agents update-usage: python3 not found" >&2
+  exit 1
+fi
+
+flags=()
+only=()
+declare -A excluded=()
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+  --force | --limits-only) flags+=("$1") ;;
+  --except)
+    if [[ $# -ge 2 ]]; then
+      excluded[$2]=1
+      shift
+    fi
+    ;;
+  *) only+=("$1") ;;
+  esac
+  shift
+done
+
+wanted() {
+  local agent="$1" candidate
+  [[ -n ${excluded[$agent]:-} ]] && return 1
+  (( ${#only[@]} == 0 )) && return 0
+  for candidate in "${only[@]}"; do
+    [[ $candidate == "$agent" ]] && return 0
+  done
+  return 1
+}
+
+collector_for() {
+  case "$1" in
+  grok | muse) printf '%s/collect.py %s\n' "$SCRIPT_DIR" "$1" ;;
+  *)
+    if [[ -n ${OMARCHY_PATH:-} && -x $OMARCHY_PATH/bin/omarchy-agent-usage-$1 ]]; then
+      printf '%s\n' "$OMARCHY_PATH/bin/omarchy-agent-usage-$1"
+    fi
+    ;;
+  esac
+}
+
+collect() {
+  local agent="$1"
+  shift
+  local record tmp
+  if ! record=$("$@" "${flags[@]}") || [[ -z $record ]]; then
+    echo "nick-agents update-usage: $agent collector failed" >&2
+    return 1
+  fi
+  if ! printf '%s' "$record" | "$PYTHON" -c 'import json,sys; json.load(sys.stdin)' 2>/dev/null; then
+    echo "nick-agents update-usage: $agent collector printed invalid JSON" >&2
+    return 1
+  fi
+  tmp=$(mktemp "$USAGE_DIR/.$agent.XXXXXX") || return 1
+  printf '%s\n' "$record" >"$tmp"
+  mv "$tmp" "$USAGE_DIR/$agent.json"
+}
+
+pids=()
+for agent in claude codex fireworks grok muse; do
+  wanted "$agent" || continue
+  read -r -a command <<<"$(collector_for "$agent")"
+  (( ${#command[@]} > 0 )) || continue
+  if [[ ${command[0]} == *.py ]]; then
+    collect "$agent" "$PYTHON" "${command[@]}" &
+  else
+    collect "$agent" "${command[@]}" &
+  fi
+  pids+=($!)
+done
+
+status=0
+for pid in "${pids[@]}"; do
+  wait "$pid" || status=1
+done
+exit "$status"

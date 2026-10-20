@@ -250,8 +250,6 @@ in
     gnome.gnome-keyring.enable = true;
 
     udev.extraRules = ''
-      SUBSYSTEM=="usb", ATTR{idVendor}=="2104", ATTR{idProduct}=="0127", MODE="0660", TAG+="uaccess"
-
       # Allow i2c group to access I2C devices for DDC/CI monitor control
       SUBSYSTEM=="i2c-dev", GROUP="i2c", MODE="0666"
       KERNEL=="i2c-[0-9]*", GROUP="i2c", MODE="0666"
@@ -268,7 +266,14 @@ in
         RUN+="${pkgs.systemd}/bin/loginctl lock-sessions"
     '';
 
-    udev.packages = [ pkgs.yubikey-personalization ];
+    udev.packages = [
+      pkgs.yubikey-personalization
+      # Set uaccess before 73-seat-late.rules schedules the active-seat ACL.
+      # extraRules is written to 99-local.rules, which is too late.
+      (pkgs.writeTextDir "lib/udev/rules.d/70-tobii-4c.rules" ''
+        SUBSYSTEM=="usb", ATTR{idVendor}=="2104", ATTR{idProduct}=="0127", MODE="0660", TAG+="uaccess"
+      '')
+    ];
 
     pcscd.enable = true;
   };

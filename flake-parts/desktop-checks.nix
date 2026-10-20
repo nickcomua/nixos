@@ -10,6 +10,18 @@
     ...
   }: {
     checks = lib.optionalAttrs (system == "x86_64-linux") {
+      gpg-signing = let
+        host = self.nixosConfigurations.nixos.config;
+      in
+        assert host.programs.gnupg.agent.pinentryPackage == pkgs.pinentry-qt;
+        assert !host.programs.gnupg.agent.enableSSHSupport;
+        assert host.home-manager.users.nick.programs.gpg.scdaemonSettings.disable-ccid;
+          pkgs.runCommand "gpg-signing-tests" {nativeBuildInputs = [pkgs.python3 pkgs.bash];} ''
+            cp -r ${../.} source
+            cd source
+            python3 -B -m unittest discover -s tests -p test_gpg_signing.py
+            touch "$out"
+          '';
       ssh-agent-config = let
         host = self.nixosConfigurations.nixos.config;
       in

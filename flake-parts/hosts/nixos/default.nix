@@ -42,6 +42,7 @@ in
     ./apfs.nix
     ./rea-tools.nix
     ./desktop-memory.nix
+    ./gpg-signing.nix
     # Determinate Nix for consistent nix daemon management
     inputs.determinate.nixosModules.default
     # Sops for secrets management

@@ -272,6 +272,7 @@ in
       # extraRules is written to 99-local.rules, which is too late.
       (pkgs.writeTextDir "lib/udev/rules.d/70-tobii-4c.rules" ''
         SUBSYSTEM=="usb", ATTR{idVendor}=="2104", ATTR{idProduct}=="0127", MODE="0660", TAG+="uaccess"
+        SUBSYSTEM=="usb", ATTR{idVendor}=="2104", ATTR{idProduct}=="0102", MODE="0660", TAG+="uaccess"
       '')
     ];
 

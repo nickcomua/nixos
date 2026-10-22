@@ -377,6 +377,13 @@ in
   # SSH still finds GCR in applications that never source shell/session setup.
   # Keep forwarded/custom agents and per-user IdentityAgent overrides intact.
   programs.ssh.extraConfig = ''
+    Host github.com ssh.github.com
+      # Share one FIDO authentication across Git/jj processes and coding agents.
+      # The private runtime directory prevents other users accessing the socket.
+      ControlMaster auto
+      ControlPath /run/user/%i/ssh-github-%C
+      ControlPersist 8h
+    Host *
     Match exec "test -z \"$SSH_AUTH_SOCK\""
       IdentityAgent /run/user/%i/gcr/ssh
     Match all

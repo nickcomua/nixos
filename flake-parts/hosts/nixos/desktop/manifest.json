@@ -4,7 +4,7 @@
   "files": {
     ".config/ddcutil/ddcutilrc": "35ef4bfac40277e2f1e3e88866e653580365100610c1be8e47a69f8a4b560c16",
     ".config/hypr/autostart.lua": "9f8a6475ac611026eaa3a5da10a445cc43a842c463d2827fc9d38142f587606b",
-    ".config/hypr/bindings.lua": "fb2a3425f21f146af25f3417115d4f26de5fe2e44b0f6143b7637a928187f382",
+    ".config/hypr/bindings.lua": "42fa1aa8db1033be3c13090fd85fab1bc296e402319bd40542c0c0f319150c82",
     ".config/hypr/hyprland.lua": "39974ad22f150e7b47f407a808ed60299dbec53a80f7908425e5b153ace3fe8d",
     ".config/hypr/input.lua": "195f194a3d4f96cbc224468c7fc406d5cfeb7846c1a161cb1f33d404f413f0d3",
     ".config/hypr/looknfeel.lua": "e293678ff7e4d6c0c415534ea500288c5b97a12428fd9dc4ba8776e31dae20d1",

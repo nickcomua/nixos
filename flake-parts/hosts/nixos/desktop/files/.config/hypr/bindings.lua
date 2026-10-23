@@ -1,6 +1,7 @@
 -- Personal exceptions to Omarchy's bindings; all other bindings stay upstream.
 hl.unbind("SUPER + W")
-
+hl.unbind("SUPER + Q")
+o.bind("SUPER + Q", "Close window", hl.dsp.window.close())
 hl.unbind("SUPER + RETURN")
 o.bind("SUPER + RETURN", "Ghostty", "ghostty")
 o.bind("SUPER + E", "Yazi", "ghostty -e yazi")

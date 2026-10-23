@@ -5,8 +5,7 @@
   inputs,
   config,
   ...
-}:
-let
+}: let
   sharedNix = import ../../modules/_shared-nix.nix;
   sshAgentEnvironment = ''
     # Preserve forwarded/custom agents; publish GCR before desktop apps start.
@@ -16,14 +15,14 @@ let
   '';
   sshAskpass = pkgs.writeShellScript "ssh-askpass-with-touch" (
     builtins.replaceStrings
-      [ "@askpass@" "@notify@" ]
-      [ "${pkgs.seahorse}/libexec/seahorse/ssh-askpass" "${pkgs.libnotify}/bin/notify-send" ]
-      (builtins.readFile ./ssh-askpass.sh)
+    ["@askpass@" "@notify@"]
+    ["${pkgs.seahorse}/libexec/seahorse/ssh-askpass" "${pkgs.libnotify}/bin/notify-send"]
+    (builtins.readFile ./ssh-askpass.sh)
   );
   kleopatra = pkgs.symlinkJoin {
     name = "kleopatra-with-gtk-schemas";
-    paths = [ pkgs.kdePackages.kleopatra ];
-    nativeBuildInputs = [ pkgs.makeWrapper ];
+    paths = [pkgs.kdePackages.kleopatra];
+    nativeBuildInputs = [pkgs.makeWrapper];
     postBuild = ''
       # The desktop's GTK Qt theme needs GTK schemas for native file dialogs.
       wrapProgram "$out/bin/kleopatra" \
@@ -35,8 +34,7 @@ let
       exec /etc/profiles/per-user/nick/bin/nixarchy-config apply "$@"
     ''
   );
-in
-{
+in {
   imports = [
     ./hardware-configuration.nix
     ./apfs.nix
@@ -44,6 +42,7 @@ in
     ./desktop-memory.nix
     ./gpg-signing.nix
     ./ssh-connection-reuse.nix
+    ./iphone-usb-share.nix
     # Determinate Nix for consistent nix daemon management
     inputs.determinate.nixosModules.default
     # Sops for secrets management
@@ -98,9 +97,9 @@ in
     defaultSopsFile = ../../../secrets.yaml;
     age.keyFile = "/home/nick/.config/sops/age/keys.txt";
     secrets = {
-      "openclaw-hooks-token" = { };
-      "gmail-push-token" = { };
-      "telegram-bot-token" = { };
+      "openclaw-hooks-token" = {};
+      "gmail-push-token" = {};
+      "telegram-bot-token" = {};
       "BWS_ACCESS_TOKEN" = {
         owner = "nick"; # Changes file owner to your user
         mode = "0400"; # Gives read-only access exclusively to the owner
@@ -124,11 +123,11 @@ in
     extraModprobeConfig = ''
       options iwlmvm power_scheme=1
     '';
-    binfmt.emulatedSystems = [ "aarch64-linux" ];
+    binfmt.emulatedSystems = ["aarch64-linux"];
 
     loader.grub = {
       enable = true;
-      devices = [ "nodev" ];
+      devices = ["nodev"];
       efiInstallAsRemovable = true;
       efiSupport = true;
       useOSProber = true;
@@ -287,11 +286,13 @@ in
     # OpenRazer copies .ko files instead of using modules_install, bypassing
     # nixpkgs' new deterministic module signing and certificate generation.
     openrazer.packages.kernel = config.boot.kernelPackages.openrazer.overrideAttrs (old: {
-      postInstall = (old.postInstall or "") + ''
-        for module in "$out/lib/modules/${config.boot.kernelPackages.kernel.modDirVersion}/kernel/drivers/hid/"*.ko; do
-          ${lib.getExe pkgs.buildPackages.kmodigest} "$module"
-        done
-      '';
+      postInstall =
+        (old.postInstall or "")
+        + ''
+          for module in "$out/lib/modules/${config.boot.kernelPackages.kernel.modDirVersion}/kernel/drivers/hid/"*.ko; do
+            ${lib.getExe pkgs.buildPackages.kmodigest} "$module"
+          done
+        '';
     });
     bluetooth = {
       enable = true;
@@ -317,9 +318,9 @@ in
     };
     voice-to-text-bot = {
       description = "Voice-to-Text Telegram Bot using Whisper";
-      after = [ "network-online.target" ];
-      wants = [ "network-online.target" ];
-      wantedBy = [ "multi-user.target" ];
+      after = ["network-online.target"];
+      wants = ["network-online.target"];
+      wantedBy = ["multi-user.target"];
       serviceConfig = {
         Type = "simple";
         User = "nick";
@@ -334,7 +335,7 @@ in
 
     fix-i2c-permissions = {
       description = "Fix I2C device permissions for ddcutil";
-      wantedBy = [ "multi-user.target" ];
+      wantedBy = ["multi-user.target"];
       serviceConfig.Type = "oneshot";
       script = ''
         chmod 666 /dev/i2c-* 2>/dev/null || true
@@ -373,7 +374,7 @@ in
   };
 
   # 2. Let NixOS inject the system's CA certificate bundle
-  security.pki.certificateFiles = [ ];
+  security.pki.certificateFiles = [];
 
   # FIDO signing requires PIN prompts from the live graphical session.
   # Socket discovery must happen before the compositor, not in GCR's late
@@ -393,18 +394,18 @@ in
   '';
   # UWSM imports DISPLAY/WAYLAND_DISPLAY before its waitenv service completes.
   systemd.user.services.gcr-ssh-agent = {
-    wantedBy = lib.mkForce [ "graphical-session.target" ];
-    after = [ "graphical-session-pre.target" "wayland-session-waitenv.service" ];
-    partOf = [ "graphical-session.target" ];
+    wantedBy = lib.mkForce ["graphical-session.target"];
+    after = ["graphical-session-pre.target" "wayland-session-waitenv.service"];
+    partOf = ["graphical-session.target"];
     environment = {
       SSH_ASKPASS = "${sshAskpass}";
       SSH_ASKPASS_REQUIRE = "force";
     };
   };
   systemd.user.sockets.gcr-ssh-agent = {
-    wantedBy = lib.mkForce [ "graphical-session.target" ];
-    after = [ "wayland-session-waitenv.service" ];
-    partOf = [ "graphical-session.target" ];
+    wantedBy = lib.mkForce ["graphical-session.target"];
+    after = ["wayland-session-waitenv.service"];
+    partOf = ["graphical-session.target"];
   };
 
   # Programs configuration
@@ -447,9 +448,9 @@ in
 
   users = {
     # Create i2c group if it doesn't exist
-    groups.i2c = { };
+    groups.i2c = {};
     # Battery conservation mode control (Noctalia ideapad-battery-health plugin)
-    groups.battery_ctl = { };
+    groups.battery_ctl = {};
 
     # Define a user account
     users.nick = {
@@ -483,7 +484,7 @@ in
   # Environment configuration
   environment = {
     localBinInPath = true;
-    pathsToLink = [ "/share/omarchy" ];
+    pathsToLink = ["/share/omarchy"];
     variables = {
       XDG_RUNTIME_DIR = "/run/user/$UID";
       BROWSER = "floorp";

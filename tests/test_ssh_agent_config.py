@@ -69,7 +69,7 @@ class AgentConfigTests(unittest.TestCase):
         )
         self.assertEqual(output, "/run/user/1234/gcr/ssh")
 
-    def test_github_reuses_connections_without_affecting_other_hosts(self):
+    def test_all_hosts_reuse_connections_until_lock(self):
         with tempfile.TemporaryDirectory() as directory:
             config = Path(directory) / "ssh_config"
             config.write_text(self.config["ssh"])
@@ -79,14 +79,10 @@ class AgentConfigTests(unittest.TestCase):
                     text=True, stderr=subprocess.DEVNULL,
                 )
                 settings = dict(line.split(" ", 1) for line in output.splitlines())
-                if host == "example.org":
-                    self.assertEqual(settings["controlmaster"], "false")
-                    self.assertEqual(settings["controlpersist"], "no")
-                else:
-                    self.assertEqual(settings["controlmaster"], "auto")
-                    self.assertEqual(settings["controlpersist"], "28800")
-                    self.assertTrue(settings["controlpath"].startswith(
-                        f"/run/user/{os.getuid()}/ssh-github-"))
+                self.assertEqual(settings["controlmaster"], "auto")
+                self.assertEqual(settings["controlpersist"], "yes")
+                self.assertTrue(settings["controlpath"].startswith(
+                    f"/run/user/{os.getuid()}/ssh-session-"))
 
     def test_ssh_fallback_only_when_socket_missing(self):
         with tempfile.TemporaryDirectory() as directory:

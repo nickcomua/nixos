@@ -28,6 +28,12 @@ class SecurityKeyLockTests(unittest.TestCase):
         text = auth.patch_view((SOURCE / "shell/plugins/lock/LockView.qml").read_text())
         self.assertIn('"Touch key or enter password"', text)
 
+    def test_secure_lock_revokes_shared_ssh_connections(self):
+        text = auth.patch_service((SOURCE / "shell/plugins/lock/Service.qml").read_text())
+        self.assertIn('sshConnectionRevoke.running = true', text)
+        self.assertIn('command: ["/run/current-system/sw/bin/ssh-control-revoke"]', text)
+        self.assertIn('if (secure) {\n        sshConnectionRevoke.running = true', text)
+
     def test_polkit_does_not_claim_password_while_pam_waits_for_key(self):
         text = auth.patch_polkit((SOURCE / "shell/plugins/polkit/PolkitAgent.qml").read_text())
         self.assertIn('!root.responseRequired ? "Touch security key" : I18n.t("polkit.enterPassword")', text)

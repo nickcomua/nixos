@@ -10,6 +10,16 @@ def replace_once(text, old, new):
 
 
 def patch_service(text):
+    text = replace_once(text, '      if (secure) {',
+                        '      if (secure) {\n        sshConnectionRevoke.running = true')
+    text = replace_once(text, '  Process {\n    id: wakeProcess', '''  Process {
+    id: sshConnectionRevoke
+    command: ["/run/current-system/sw/bin/ssh-control-revoke"]
+    onExited: function(exitCode) { root.logEvent("ssh-connections-revoked: exit=" + exitCode) }
+  }
+
+  Process {
+    id: wakeProcess''')
     text = replace_once(text, '  property bool fingerprintConfigured: false',
                         '  property bool securityKeyConfigured: false\n  property bool fingerprintConfigured: false')
     text = replace_once(text, '    if (passwordPam.active) passwordPam.abort()',

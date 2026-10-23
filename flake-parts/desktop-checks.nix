@@ -35,6 +35,9 @@
           });
         } ''
           python3 -B ${../tests/test_ssh_agent_config.py}
+          cp -r ${../.} source
+          cd source
+          python3 -B tests/test_ssh_control_revoke.py
           touch "$out"
         '';
       desktop-runtime = let

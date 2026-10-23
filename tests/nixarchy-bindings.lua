@@ -13,6 +13,8 @@ hl = {
   on = function() end,
 }
 o = {
+  workspaces = dispatcher('workspaces'),
+  launch_terminal = dispatcher('terminal'),
   bind = function(key, description, action, options)
     local id = key .. ((options and options.release) and ':release' or '')
     bindings[id] = bindings[id] or {}
@@ -23,8 +25,9 @@ o = {
   end,
   preinstalled_bindings_enabled = function() return true end,
   cmd_present = function() return false end,
+  cmd_missing = function() return true end,
 }
-for _, name in ipairs({'tiling', 'utilities', 'applications', 'clipboard', 'media', 'voxtype'}) do
+for _, name in ipairs({'tiling', 'utilities', 'applications', 'clipboard', 'media', 'dictation'}) do
   dofile(os.getenv('OMARCHY_SOURCE') .. '/default/hypr/bindings/' .. name .. '.lua')
 end
 dofile('flake-parts/hosts/nixos/desktop/files/.config/hypr/bindings.lua')
@@ -33,7 +36,7 @@ local expected = {
   ['SUPER + Q'] = 'Close window',
   ['SUPER + RETURN'] = 'Ghostty',
   ['SUPER + E'] = 'Yazi',
-  ['SUPER + L'] = 'Toggle workspace layout',
+  ['SUPER + L'] = 'Cycle workspace layout',
   ['SUPER + S'] = 'Toggle scratchpad',
   ['SUPER + TAB'] = 'Next workspace',
   ['SUPER + V'] = 'Universal paste',

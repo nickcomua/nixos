@@ -12,8 +12,8 @@ def replace_once(text, old, new):
 def patch_service(text):
     text = replace_once(text, '  property bool fingerprintConfigured: false',
                         '  property bool securityKeyConfigured: false\n  property bool fingerprintConfigured: false')
-    text = replace_once(text, '    fingerprintRetryTimer.stop()',
-                        '    securityKeyRetryTimer.stop()\n    if (securityKeyPam.active) securityKeyPam.abort()\n    fingerprintRetryTimer.stop()')
+    text = replace_once(text, '    if (passwordPam.active) passwordPam.abort()',
+                        '    securityKeyRetryTimer.stop()\n    if (securityKeyPam.active) securityKeyPam.abort()\n    if (passwordPam.active) passwordPam.abort()')
     text = replace_once(text, '  function startFingerprint() {', '''  function startSecurityKey() {
     if (!lockRequested || !sessionLock.secure || !securityKeyConfigured || securityKeyPam.active) return
     securityKeyPam.start()
@@ -71,14 +71,14 @@ def patch_service(text):
 def patch_view(text):
     text = replace_once(text, '  property bool fingerprintConfigured: false',
                         '  property bool securityKeyConfigured: false\n  property bool fingerprintConfigured: false')
-    return replace_once(text, 'readonly property string placeholderText: "Enter Password"',
-                        'readonly property string placeholderText: securityKeyConfigured ? "Touch key or enter password" : "Enter Password"')
+    return replace_once(text, 'readonly property string placeholderText: Commons.I18n.t("lock.enterPassword")',
+                        'readonly property string placeholderText: securityKeyConfigured ? "Touch key or enter password" : Commons.I18n.t("lock.enterPassword")')
 
 
 def patch_polkit(text):
     return replace_once(text,
-                        '(root.submitted ? "Checking..." : "Enter password")',
-                        '(root.submitted ? "Checking..." : (!root.responseRequired ? "Touch security key" : "Enter password"))')
+                        '(root.submitted ? I18n.t("polkit.checking") : I18n.t("polkit.enterPassword"))',
+                        '(root.submitted ? I18n.t("polkit.checking") : (!root.responseRequired ? "Touch security key" : I18n.t("polkit.enterPassword")))')
 
 
 def apply(root):

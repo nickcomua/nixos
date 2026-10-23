@@ -30,7 +30,7 @@ class SecurityKeyLockTests(unittest.TestCase):
 
     def test_polkit_does_not_claim_password_while_pam_waits_for_key(self):
         text = auth.patch_polkit((SOURCE / "shell/plugins/polkit/PolkitAgent.qml").read_text())
-        self.assertIn('!root.responseRequired ? "Touch security key" : "Enter password"', text)
+        self.assertIn('!root.responseRequired ? "Touch security key" : I18n.t("polkit.enterPassword")', text)
 
     def test_upstream_drift_fails_loudly(self):
         with self.assertRaises(ValueError):

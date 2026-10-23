@@ -283,6 +283,15 @@ in
   hardware = {
     graphics.enable32Bit = true;
     openrazer.enable = true;
+    # OpenRazer copies .ko files instead of using modules_install, bypassing
+    # nixpkgs' new deterministic module signing and certificate generation.
+    openrazer.packages.kernel = config.boot.kernelPackages.openrazer.overrideAttrs (old: {
+      postInstall = (old.postInstall or "") + ''
+        for module in "$out/lib/modules/${config.boot.kernelPackages.kernel.modDirVersion}/kernel/drivers/hid/"*.ko; do
+          ${lib.getExe pkgs.buildPackages.kmodigest} "$module"
+        done
+      '';
+    });
     bluetooth = {
       enable = true;
       powerOnBoot = true; # unblock rfkill so Noctalia can manage bluetooth

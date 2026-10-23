@@ -27,6 +27,7 @@ in {
     ./configuration.nix
     ./hardware-configuration.nix
     ./monitoring.nix
+    ./tobii.nix
     inputs.sops-nix.nixosModules.sops
     # TODO: determinate-nix tests fail in CI - re-enable when upstream fixes it
     # inputs.determinate.nixosModules.default

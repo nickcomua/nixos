@@ -64,7 +64,11 @@ in {
         interface = "usb0";
         bind-dynamic = true;
         dhcp-range = "192.168.7.1,192.168.7.1,255.255.255.0,1h";
-        dhcp-option = "option:router";
+        # Alta is also the PC's internet gateway over Type-C (NAT usb0 -> end0).
+        dhcp-option = [
+          "option:router,192.168.7.2"
+          "option:dns-server,192.168.7.2"
+        ];
       };
     };
 
@@ -84,6 +88,30 @@ in {
   };
 
   systemd.services = {
+    # On Alta (unlike the Pi 4) the Type-C port is dual-role and boots in host
+    # mode, so the g_ether gadget never attaches. Flip it to device mode so the
+    # PC sees usb0 (USB-A ports and the Tobii are on a separate hub, unaffected).
+    usb-c-device-mode = {
+      description = "Put the Type-C port in USB device mode for g_ether";
+      wantedBy = ["multi-user.target"];
+      after = ["systemd-modules-load.service"];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+      };
+      script = ''
+        for i in $(seq 1 20); do
+          if [ -w /sys/class/usb_role/ffe09000.usb-role-switch/role ]; then
+            echo device > /sys/class/usb_role/ffe09000.usb-role-switch/role
+            exit 0
+          fi
+          sleep 0.5
+        done
+        echo "usb role switch not found" >&2
+        exit 1
+      '';
+    };
+
     cloudflared-services = {
       description = "Cloudflare Tunnel for hosted services";
       after = ["network-online.target"];
@@ -122,8 +150,15 @@ in {
       "8.8.8.8"
       "8.8.4.4"
     ];
+    # Share Alta's Ethernet uplink with the USB-connected PC.
+    nat = {
+      enable = true;
+      internalInterfaces = ["usb0"];
+      externalInterface = "end0";
+    };
     firewall = {
       enable = true;
+      trustedInterfaces = ["usb0"];
       allowedTCPPortRanges = [
         {
           from = 0;

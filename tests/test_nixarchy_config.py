@@ -182,6 +182,11 @@ class DesktopTests(unittest.TestCase):
         baseline = Path(__file__).parents[1] / d.SNAPSHOT_REL
         d.read_manifest(baseline)
 
+    def test_baseline_disables_idle_screensaver_and_auto_lock(self):
+        baseline = Path(__file__).parents[1] / d.SNAPSHOT_REL
+        settings = json.loads((baseline / 'files/.config/omarchy/shell.json').read_text())
+        self.assertEqual(settings['idle'], {'lock': 0, 'screensaver': 0})
+
     def test_jsonc_comments_preserve_urls_and_reject_bad_syntax(self):
         p = self.put('.config/omarchy/extensions/test.jsonc',
                      '{ // comment\n "url": "https://example.test/a,b}", /* block */ "items": [1,], }')

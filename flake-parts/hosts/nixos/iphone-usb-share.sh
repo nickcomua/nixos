@@ -4,30 +4,8 @@ set -euo pipefail
 IFACE="${IPHONE_USB_IFACE:-iphoneusb}"
 CON_NAME="${IPHONE_USB_CONNECTION:-iphone-usb-share}"
 HOST_ADDR="${IPHONE_USB_HOST:-10.44.0.1/24}"
-PHONE_ADDR="${IPHONE_USB_PHONE:-10.44.0.2}"
-PHONE_MASK="${IPHONE_USB_MASK:-255.255.255.0}"
-PHONE_GW="${IPHONE_USB_GW:-10.44.0.1}"
-SSH_PORT="${IPHONE_SSH_PORT:-2222}"
-SSH_USER="${IPHONE_SSH_USER:-mobile}"
-SSH_IDENTITY="${IPHONE_SSH_IDENTITY:-/home/nick/.ssh/id_ed25519_sk_main}"
-SSH_KNOWN_HOSTS="${IPHONE_SSH_KNOWN_HOSTS:-/home/nick/.hermes/cache/scratch/iphone-ssh-hostkey}"
 
 log() { printf 'iphone-usb-share: %s\n' "$*"; }
-
-ssh_phone() {
-  local args=(
-    -o BatchMode=yes
-    -o ConnectTimeout=4
-    -o IdentitiesOnly=yes
-    -i "$SSH_IDENTITY"
-    -o StrictHostKeyChecking=yes
-    -p "$SSH_PORT"
-  )
-  if [[ -f "$SSH_KNOWN_HOSTS" ]]; then
-    args+=(-o "UserKnownHostsFile=$SSH_KNOWN_HOSTS")
-  fi
-  ssh "${args[@]}" "${SSH_USER}@127.0.0.1" "$@"
-}
 
 wait_iface() {
   local n=0
@@ -77,12 +55,10 @@ up() {
 
   nmcli connection up "$CON_NAME" ifname "$IFACE"
 
-  if ssh_phone 'true' >/dev/null 2>&1; then
-    ssh_phone "sudo -n /var/jb/usr/sbin/ifconfig anpi0 ${PHONE_ADDR} netmask ${PHONE_MASK} up; sudo -n /var/jb/usr/sbin/route -n add default ${PHONE_GW} 2>/dev/null || sudo -n /var/jb/usr/sbin/route add default ${PHONE_GW}; if test -x /var/jb/usr/local/bin/usb-dns-probe; then sudo -n /var/jb/usr/local/bin/usb-dns-probe; fi" \
-      || log "phone address/DNS helper failed (Linux share is still up)"
-  else
-    log "phone SSH not ready; Linux share is up on ${IFACE}"
-  fi
+  # The phone's local.iphonex.usb-network launch daemon handles its address,
+  # route, and configd DNS state on every reconnect. Do not authenticate from
+  # this root service with a user's touch-required key or temporary host pin.
+  log "Linux share is up on ${IFACE}; phone-side launchd handles reconnects"
 }
 
 down() {

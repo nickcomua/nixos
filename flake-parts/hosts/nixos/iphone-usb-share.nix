@@ -8,11 +8,10 @@
     name = "iphone-usb-share";
     runtimeInputs = [
       pkgs.coreutils
+      pkgs.gnugrep
       pkgs.iproute2
       pkgs.networkmanager
-      pkgs.openssh
     ];
-    excludeShellChecks = ["SC2029"];
     text = builtins.readFile ./iphone-usb-share.sh;
   };
   installIpa = pkgs.writeShellApplication {

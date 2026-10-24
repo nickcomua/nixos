@@ -162,11 +162,16 @@ in {
         # Cactus microphone WebSocket: trusted wired LAN and USB only.
         iptables -w -C nixos-fw -i enp5s0 -s 192.168.1.0/24 -p tcp --dport 18765 -j nixos-fw-accept 2>/dev/null || iptables -w -I nixos-fw 1 -i enp5s0 -s 192.168.1.0/24 -p tcp --dport 18765 -j nixos-fw-accept
         iptables -w -C nixos-fw -i enp8s0f3u+ -s 172.16.42.0/24 -p tcp --dport 18765 -j nixos-fw-accept 2>/dev/null || iptables -w -I nixos-fw 1 -i enp8s0f3u+ -s 172.16.42.0/24 -p tcp --dport 18765 -j nixos-fw-accept
+        # Orca: trusted wired and Wi-Fi LAN only.
+        iptables -w -C nixos-fw -i enp5s0 -s 192.168.1.0/24 -p tcp --dport 6768 -j nixos-fw-accept 2>/dev/null || iptables -w -I nixos-fw 1 -i enp5s0 -s 192.168.1.0/24 -p tcp --dport 6768 -j nixos-fw-accept
+        iptables -w -C nixos-fw -i wlp6s0 -s 192.168.1.0/24 -p tcp --dport 6768 -j nixos-fw-accept 2>/dev/null || iptables -w -I nixos-fw 1 -i wlp6s0 -s 192.168.1.0/24 -p tcp --dport 6768 -j nixos-fw-accept
       '';
       extraStopCommands = ''
         iptables -w -D nixos-fw -i wlp6s0 -s 192.168.1.0/24 -p tcp --dport 8642 -j nixos-fw-accept 2>/dev/null || true
         iptables -w -D nixos-fw -i enp5s0 -s 192.168.1.0/24 -p tcp --dport 18765 -j nixos-fw-accept 2>/dev/null || true
         iptables -w -D nixos-fw -i enp8s0f3u+ -s 172.16.42.0/24 -p tcp --dport 18765 -j nixos-fw-accept 2>/dev/null || true
+        iptables -w -D nixos-fw -i enp5s0 -s 192.168.1.0/24 -p tcp --dport 6768 -j nixos-fw-accept 2>/dev/null || true
+        iptables -w -D nixos-fw -i wlp6s0 -s 192.168.1.0/24 -p tcp --dport 6768 -j nixos-fw-accept 2>/dev/null || true
       '';
     };
   };

@@ -156,8 +156,14 @@ in {
         9000
         9001
       ];
-      # Hermes Android: only the current trusted Wi-Fi LAN, not other interfaces.
+      # Home LAN: accept every port from 192.168.1.0/24 on wired and Wi-Fi.
+      # Docker, Tailscale, and other interfaces stay filtered.
       extraCommands = ''
+        iptables -w -C nixos-fw -i enp5s0 -s 192.168.1.0/24 -j nixos-fw-accept 2>/dev/null || iptables -w -I nixos-fw 1 -i enp5s0 -s 192.168.1.0/24 -j nixos-fw-accept
+        iptables -w -C nixos-fw -i wlp6s0 -s 192.168.1.0/24 -j nixos-fw-accept 2>/dev/null || iptables -w -I nixos-fw 1 -i wlp6s0 -s 192.168.1.0/24 -j nixos-fw-accept
+        ip6tables -w -C nixos-fw -i enp5s0 -s fe80::/10 -j nixos-fw-accept 2>/dev/null || ip6tables -w -I nixos-fw 1 -i enp5s0 -s fe80::/10 -j nixos-fw-accept
+        ip6tables -w -C nixos-fw -i wlp6s0 -s fe80::/10 -j nixos-fw-accept 2>/dev/null || ip6tables -w -I nixos-fw 1 -i wlp6s0 -s fe80::/10 -j nixos-fw-accept
+        # Hermes Android: only the current trusted Wi-Fi LAN, not other interfaces.
         iptables -w -I nixos-fw 1 -i wlp6s0 -s 192.168.1.0/24 -p tcp --dport 8642 -j nixos-fw-accept
         # Cactus microphone WebSocket: trusted wired LAN and USB only.
         iptables -w -C nixos-fw -i enp5s0 -s 192.168.1.0/24 -p tcp --dport 18765 -j nixos-fw-accept 2>/dev/null || iptables -w -I nixos-fw 1 -i enp5s0 -s 192.168.1.0/24 -p tcp --dport 18765 -j nixos-fw-accept
@@ -167,6 +173,10 @@ in {
         iptables -w -C nixos-fw -i wlp6s0 -s 192.168.1.0/24 -p tcp --dport 6768 -j nixos-fw-accept 2>/dev/null || iptables -w -I nixos-fw 1 -i wlp6s0 -s 192.168.1.0/24 -p tcp --dport 6768 -j nixos-fw-accept
       '';
       extraStopCommands = ''
+        iptables -w -D nixos-fw -i enp5s0 -s 192.168.1.0/24 -j nixos-fw-accept 2>/dev/null || true
+        iptables -w -D nixos-fw -i wlp6s0 -s 192.168.1.0/24 -j nixos-fw-accept 2>/dev/null || true
+        ip6tables -w -D nixos-fw -i enp5s0 -s fe80::/10 -j nixos-fw-accept 2>/dev/null || true
+        ip6tables -w -D nixos-fw -i wlp6s0 -s fe80::/10 -j nixos-fw-accept 2>/dev/null || true
         iptables -w -D nixos-fw -i wlp6s0 -s 192.168.1.0/24 -p tcp --dport 8642 -j nixos-fw-accept 2>/dev/null || true
         iptables -w -D nixos-fw -i enp5s0 -s 192.168.1.0/24 -p tcp --dport 18765 -j nixos-fw-accept 2>/dev/null || true
         iptables -w -D nixos-fw -i enp8s0f3u+ -s 172.16.42.0/24 -p tcp --dport 18765 -j nixos-fw-accept 2>/dev/null || true

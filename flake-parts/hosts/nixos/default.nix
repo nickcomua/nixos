@@ -15,10 +15,14 @@
   '';
   sshAskpass = pkgs.writeShellScript "ssh-askpass-with-touch" (
     builtins.replaceStrings
-    ["@askpass@" "@notify@"]
-    ["${pkgs.seahorse}/libexec/seahorse/ssh-askpass" "${pkgs.libnotify}/bin/notify-send"]
+    ["@askpass@" "@notify@" "@gdbus@" "@sleep@"]
+    ["${pkgs.seahorse}/libexec/seahorse/ssh-askpass" "${pkgs.libnotify}/bin/notify-send" "${pkgs.glib.bin}/bin/gdbus" "${pkgs.coreutils}/bin/sleep"]
     (builtins.readFile ./ssh-askpass.sh)
   );
+  # OpenSSH otherwise forgets the notifier when signing retries after a PIN.
+  sshAgent = pkgs.openssh.overrideAttrs (old: {
+    patches = (old.patches or []) ++ [./openssh-touch-retry.patch];
+  });
   kleopatra = pkgs.symlinkJoin {
     name = "kleopatra-with-gtk-schemas";
     paths = [pkgs.kdePackages.kleopatra];
@@ -76,6 +80,12 @@ in {
           substituteInPlace default/sddm/omarchy/Main.qml \
             --replace-fail 'Keys.onPressed: {' 'Keys.onPressed: function(event) {'
           ${pkgs.python3}/bin/python3 ${./patch-omarchy-auth.py} .
+        '';
+      # Run after Nixarchy's own notification patches, not before their anchors.
+      postInstall =
+        (old.postInstall or "")
+        + ''
+          ${pkgs.python3}/bin/python3 ${./patch-omarchy-auth.py} --notifications "$out/share/omarchy"
         '';
     });
     menu.extraEntries = {
@@ -411,6 +421,7 @@ in {
     Match all
   '';
   # UWSM imports DISPLAY/WAYLAND_DISPLAY before its waitenv service completes.
+  services.gnome.gcr-ssh-agent.package = pkgs.gcr_4.override {openssh = sshAgent;};
   systemd.user.services.gcr-ssh-agent = {
     wantedBy = lib.mkForce ["graphical-session.target"];
     after = ["graphical-session-pre.target" "wayland-session-waitenv.service"];

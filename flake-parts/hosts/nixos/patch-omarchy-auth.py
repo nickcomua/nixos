@@ -91,6 +91,18 @@ def patch_polkit(text):
                         '(root.submitted ? I18n.t("polkit.checking") : (!root.responseRequired ? "Touch security key" : I18n.t("polkit.enterPassword")))')
 
 
+def patch_notifications(text):
+    # Touch reminders are operation-scoped, not snapshots to retain after withdrawal.
+    return replace_once(text,
+                        '      service.refsRevision += 1\n      // Visible snapshots',
+                        '''      service.refsRevision += 1
+      if (notification.appName === "SSH security key" && service.rowIndexFor(key) >= 0) {
+        service.closeToast(key, "closed")
+        return
+      }
+      // Visible snapshots''')
+
+
 def apply(root):
     for relative, transform in (
         ("shell/plugins/lock/Service.qml", patch_service),
@@ -102,4 +114,8 @@ def apply(root):
 
 
 if __name__ == "__main__":
-    apply(Path(sys.argv[1] if len(sys.argv) > 1 else "."))
+    if len(sys.argv) > 1 and sys.argv[1] == "--notifications":
+        path = Path(sys.argv[2]) / "shell/plugins/notifications/Service.qml"
+        path.write_text(patch_notifications(path.read_text()))
+    else:
+        apply(Path(sys.argv[1] if len(sys.argv) > 1 else "."))

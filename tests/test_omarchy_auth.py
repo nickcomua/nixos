@@ -38,9 +38,16 @@ class SecurityKeyLockTests(unittest.TestCase):
         text = auth.patch_polkit((SOURCE / "shell/plugins/polkit/PolkitAgent.qml").read_text())
         self.assertIn('!root.responseRequired ? "Touch security key" : I18n.t("polkit.enterPassword")', text)
 
+    def test_ssh_touch_notification_closes_when_sender_withdraws_it(self):
+        text = auth.patch_notifications((SOURCE / "shell/plugins/notifications/Service.qml").read_text())
+        self.assertIn('if (notification.appName === "SSH security key" && service.rowIndexFor(key) >= 0)', text)
+        self.assertIn('service.closeToast(key, "closed")\n        return', text)
+
     def test_upstream_drift_fails_loudly(self):
         with self.assertRaises(ValueError):
             auth.patch_service("changed upstream source")
+        with self.assertRaises(ValueError):
+            auth.patch_notifications("changed upstream source")
 
 
 if __name__ == "__main__":

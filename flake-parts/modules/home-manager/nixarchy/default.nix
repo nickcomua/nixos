@@ -73,6 +73,12 @@ in {
             --replace-fail 'Keys.onPressed: {' 'Keys.onPressed: function(event) {'
           ${pkgs.python3}/bin/python3 ${../../../hosts/nixos/patch-omarchy-auth.py} .
         '';
+      # Run after Nixarchy's own notification patches, not before their anchors.
+      postInstall =
+        (old.postInstall or "")
+        + ''
+          ${pkgs.python3}/bin/python3 ${../../../hosts/nixos/patch-omarchy-auth.py} --notifications "$out/share/omarchy"
+        '';
     });
   };
   home = {

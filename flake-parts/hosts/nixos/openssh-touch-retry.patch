@@ -1,0 +1,16 @@
+diff --git a/ssh-agent.c b/ssh-agent.c
+--- a/ssh-agent.c
++++ b/ssh-agent.c
+@@ -959,4 +959,12 @@
+ 			pin = read_passphrase(prompt, RP_USE_ASKPASS);
++			if (pin != NULL && *pin != '\0' &&
++			    (id->key->sk_flags & SSH_SK_USER_PRESENCE_REQD)) {
++				notifier = notify_start(0,
++				    "Confirm user presence for key %s %s%s%s",
++				    sshkey_type(id->key), fp,
++				    sig_dest == NULL ? "" : "\n",
++				    sig_dest == NULL ? "" : sig_dest);
++			}
+ 			retried = 1;
+ 			goto retry_pin;
+ 		}

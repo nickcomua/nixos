@@ -517,20 +517,27 @@ in {
       applyDesktop
       yubioath-flutter
       kleopatra
-      vscode
-      google-chrome
+      # Nixarchy's enabled apps own Chrome, Ghostty, VS Code, Zed,
+      # Bitwarden and uv; avoid declaring those packages a second time.
+      # Shared tools and Bluetooth are also supplied by their enabled modules.
       floorp-bin
       inputs.horse-browser.packages.${pkgs.stdenv.hostPlatform.system}.default
-      ghostty
+      (inputs.prismlauncher-cracked.packages.${pkgs.stdenv.hostPlatform.system}.default.override {
+        jdks = [jdk25 jdk21 jdk17 jdk8];
+        # The pinned launcher still refers to nixpkgs' removed Qt 5 alias.
+        prismlauncher-unwrapped =
+          (inputs.prismlauncher-cracked.packages.${pkgs.stdenv.hostPlatform.system}.prismlauncher-unwrapped.override {
+            extra-cmake-modules = kdePackages.extra-cmake-modules;
+          }).overrideAttrs (old: {
+            nativeBuildInputs = old.nativeBuildInputs ++ [pkg-config];
+          });
+      })
       direnv
       bubblewrap
       fnm
-      uv
       zellij
-      git
       jujutsu
       iw # Inspect Wi-Fi link, BSSID, bitrate, and power state.
-      fzf
       pkg-config
       llvmPackages.bintools
       glibc.dev
@@ -540,26 +547,19 @@ in {
       libsecret
       telegram-desktop
       google-cloud-sdk
-      gcc
-      tldr
       super-productivity
       # activitywatch
       discord
-      bluez
       bluetui
       pavucontrol
       qt6.qtwebsockets
       kdePackages.krdp
       kdePackages.ark
       kdePackages.partitionmanager
-      bitwarden-desktop
       bitwarden-cli
 
       openrazer-daemon
       polychromatic
-      zed-editor
-
-      sops
       age
 
       proton-vpn

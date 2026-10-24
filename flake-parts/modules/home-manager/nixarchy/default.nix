@@ -130,6 +130,12 @@ in {
   # The repository is already managed with jj; upstream's Git setup wizard
   # must not offer to initialize or commit it on login.
   xdg.configFile."omarchy/hooks/post-boot.d/config-repo".enable = false;
+  # Omarchy ships a Discord web app under a different desktop ID from the
+  # native client. Mask only that shortcut, retaining the native app and data.
+  xdg.desktopEntries."omarchy-Discord" = {
+    name = "Discord";
+    settings.Hidden = "true";
+  };
   systemd.user.services.omarchy-logind-lock = {
     Unit = {
       Description = "Forward logind lock requests to the Omarchy lock screen";

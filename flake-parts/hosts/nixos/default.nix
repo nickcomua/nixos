@@ -43,6 +43,7 @@ in {
     ./gpg-signing.nix
     ./ssh-connection-reuse.nix
     ./iphone-usb-share.nix
+    ./anywherelan.nix
     # Determinate Nix for consistent nix daemon management
     inputs.determinate.nixosModules.default
     # Sops for secrets management

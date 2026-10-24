@@ -68,7 +68,7 @@
           fi
         }
       ''
-      (lib.mkIf pkgs.stdenv.isDarwin ''
+      (lib.mkIf pkgs.stdenv.hostPlatform.isDarwin ''
         # macOS specific
         eval "$(uv generate-shell-completion zsh)"
         eval "$(uvx --generate-shell-completion zsh)"
@@ -116,7 +116,7 @@
           "fzf"
           "direnv"
         ]
-        ++ lib.optionals pkgs.stdenv.isDarwin ["macos"];
+        ++ lib.optionals pkgs.stdenv.hostPlatform.isDarwin ["macos"];
     };
   };
 

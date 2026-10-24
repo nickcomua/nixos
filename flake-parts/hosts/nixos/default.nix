@@ -44,6 +44,8 @@ in {
     ./ssh-connection-reuse.nix
     ./iphone-usb-share.nix
     ./anywherelan.nix
+    ./nixarchy-options-doc.nix
+    ./os-prober.nix
     # Determinate Nix for consistent nix daemon management
     inputs.determinate.nixosModules.default
     # Sops for secrets management
@@ -226,10 +228,10 @@ in {
       enable = true;
       nssmdns4 = true;
       openFirewall = true;
-      publish = {
-        enable = true;
-        userServices = true;
-        addresses = true;
+      settings.publish = {
+        disable-publishing = false;
+        disable-user-service-publishing = false;
+        publish-addresses = true;
       };
     };
 

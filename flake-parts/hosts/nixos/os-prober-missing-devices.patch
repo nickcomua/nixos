@@ -1,0 +1,7 @@
+--- a/os-prober
++++ b/os-prober
+@@ -133,1 +133,4 @@
+ for partition in $(partitions); do
++	# dmraid can return "no block devices found" with a successful status.
++	# Ignore its unmatched mapper globs (and devices removed mid-probe).
++	[ -b "$partition" ] || continue

@@ -6,11 +6,11 @@
 }: let
   # Use Vulkan-accelerated whisper-cpp on Linux, regular on macOS
   whisperPackage =
-    if pkgs.stdenv.isLinux
+    if pkgs.stdenv.hostPlatform.isLinux
     then pkgs.whisper-cpp-vulkan
     else pkgs.whisper-cpp;
 
-  inherit (pkgs.stdenv) isLinux;
+  inherit (pkgs.stdenv.hostPlatform) isLinux;
 in
   pkgs.writeShellScriptBin "whisper-transcribe" ''
     set -euo pipefail

@@ -34,6 +34,9 @@ in {
   environment.systemPackages = [awl desktop];
   boot.kernelModules = ["tun"];
 
+  # Allow paired awl peers to reach all services listening on the VPN interface.
+  networking.firewall.trustedInterfaces = ["awl0"];
+
   systemd.services.awl = {
     description = "Anywherelan peer-to-peer mesh VPN";
     wants = ["network-online.target"];

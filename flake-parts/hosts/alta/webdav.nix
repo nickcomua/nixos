@@ -18,20 +18,6 @@
     chown webdav:webdav /run/webdav/htpasswd.new
     chmod 0400 /run/webdav/htpasswd.new
     mv /run/webdav/htpasswd.new /run/webdav/htpasswd
-
-    if [[ ! -f /var/lib/webdav-tls/key.pem ]]; then
-      ${pkgs.openssl}/bin/openssl req -x509 -newkey rsa:3072 -nodes -days 3650 \
-        -subj /CN=alta.local \
-        -addext 'subjectAltName=DNS:alta.local,DNS:alta,DNS:alta.home,IP:192.168.1.96,IP:192.168.7.2' \
-        -addext 'basicConstraints=critical,CA:TRUE' \
-        -keyout /var/lib/webdav-tls/key.pem.new \
-        -out /var/lib/webdav-tls/cert.pem.new
-      chown webdav:webdav /var/lib/webdav-tls/*.new
-      chmod 0400 /var/lib/webdav-tls/key.pem.new
-      chmod 0444 /var/lib/webdav-tls/cert.pem.new
-      mv /var/lib/webdav-tls/cert.pem.new /var/lib/webdav-tls/cert.pem
-      mv /var/lib/webdav-tls/key.pem.new /var/lib/webdav-tls/key.pem
-    fi
   '';
 in {
   fileSystems."/srv/webdav" = {
@@ -59,7 +45,7 @@ in {
   };
 
   systemd.services.webdav = {
-    description = "Authenticated HTTPS WebDAV storage";
+    description = "Authenticated HTTP WebDAV storage";
     wantedBy = ["multi-user.target"];
     wants = ["network-online.target"];
     after = ["network-online.target" "sops-nix.service" "srv-webdav.mount"];
@@ -68,14 +54,12 @@ in {
     serviceConfig = {
       User = "webdav";
       Group = "webdav";
-      StateDirectory = "webdav-tls";
       ReadWritePaths = ["/srv/webdav"];
-      StateDirectoryMode = "0700";
       RuntimeDirectory = "webdav";
       RuntimeDirectoryMode = "0700";
       UMask = "0077";
       ExecStartPre = "+${prepare}";
-      ExecStart = "${pkgs.rclone}/bin/rclone serve webdav /srv/webdav/files --addr :8443 --htpasswd /run/webdav/htpasswd --cert /var/lib/webdav-tls/cert.pem --key /var/lib/webdav-tls/key.pem --config /dev/null";
+      ExecStart = "${pkgs.rclone}/bin/rclone serve webdav /srv/webdav/files --addr :8080 --htpasswd /run/webdav/htpasswd --config /dev/null";
       Restart = "on-failure";
       RestartSec = "30s";
       NoNewPrivileges = true;
@@ -93,5 +77,5 @@ in {
     ACTION=="add", SUBSYSTEM=="block", ENV{ID_FS_UUID}=="69BC-736E", TAG+="systemd", ENV{SYSTEMD_WANTS}+="webdav.service"
   '';
   # Keep this private: no public tunnel is configured for WebDAV.
-  networking.firewall.interfaces.end0.allowedTCPPorts = [8443];
+  networking.firewall.interfaces.end0.allowedTCPPorts = [8080];
 }

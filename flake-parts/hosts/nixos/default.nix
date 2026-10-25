@@ -48,6 +48,7 @@ in {
     ./ssh-connection-reuse.nix
     ./iphone-usb-share.nix
     ./anywherelan.nix
+    inputs.helium.nixosModules.default
     ./nixarchy-options-doc.nix
     ./os-prober.nix
     # Determinate Nix for consistent nix daemon management
@@ -61,6 +62,8 @@ in {
     inputs.nixarchy.nixosModules.nixarchy
     ../../../nixarchy-apps.nix
   ];
+
+  programs.helium.enable = true;
 
   programs.nixarchy = {
     enable = true;

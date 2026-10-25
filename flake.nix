@@ -70,6 +70,10 @@
     };
 
     # --- MAIN PC SPECIFIC ---
+    helium = {
+      url = "github:oxcl/nix-flake-helium-browser";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     horse-browser = {
       url = "git+ssh://git@github.com/nickcomua/horse-browser-nix.git?ref=main";
     };

@@ -13,7 +13,7 @@
     stateVersion = "24.05";
     username = "nick";
     homeDirectory = "/home/nick";
-    packages = [pkgs.brave];
+    packages = [pkgs.brave (import ./ipfs-desktop.nix {inherit pkgs;})];
   };
 
   home.sessionVariables.BROWSER = "helium";

@@ -13,6 +13,7 @@
     stateVersion = "24.05";
     username = "nick";
     homeDirectory = "/home/nick";
+    packages = [pkgs.brave];
   };
 
   # Disable Horse Browser as default, use Google Chrome instead

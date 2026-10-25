@@ -17,6 +17,17 @@
   };
 
   home.sessionVariables.BROWSER = "helium";
+  xdg.configFile."xdg-desktop-portal/hyprland-portals.conf".text = ''
+    [preferred]
+    default=hyprland;gtk
+    org.freedesktop.impl.portal.FileChooser=gnome
+    org.freedesktop.impl.portal.Secret=gnome-keyring
+  '';
+  # GNOME's portal disables file dialogs when a forced GDK backend fails.
+  xdg.configFile."systemd/user/xdg-desktop-portal-gnome.service.d/file-picker.conf".text = ''
+    [Service]
+    UnsetEnvironment=GDK_BACKEND
+  '';
 
   # Omarchy owns mutable application defaults and Hyprland Lua settings.
   services.nixi.enable = false;

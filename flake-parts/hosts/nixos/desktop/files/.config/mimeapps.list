@@ -3,6 +3,7 @@ x-scheme-handler/tg=org.telegram.desktop.desktop;
 x-scheme-handler/tonsite=org.telegram.desktop.desktop;
 
 [Default Applications]
+inode/directory=org.gnome.Nautilus.desktop
 application/rdf+xml=helium.desktop
 application/rss+xml=helium.desktop
 application/vnd.mozilla.xul+xml=helium.desktop

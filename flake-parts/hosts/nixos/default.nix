@@ -64,6 +64,7 @@ in {
   ];
 
   programs.helium.enable = true;
+  xdg.portal.extraPortals = [pkgs.xdg-desktop-portal-gnome];
 
   programs.nixarchy = {
     enable = true;

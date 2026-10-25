@@ -3,17 +3,17 @@ x-scheme-handler/tg=org.telegram.desktop.desktop;
 x-scheme-handler/tonsite=org.telegram.desktop.desktop;
 
 [Default Applications]
-application/rdf+xml=floorp.desktop
-application/rss+xml=floorp.desktop
-application/vnd.mozilla.xul+xml=floorp.desktop
-application/xhtml+xml=floorp.desktop
-application/xml=floorp.desktop
-text/html=google-chrome.desktop
-text/xml=floorp.desktop
-x-scheme-handler/http=google-chrome.desktop
-x-scheme-handler/https=google-chrome.desktop
-x-scheme-handler/unknown=google-chrome.desktop
-x-scheme-handler/about=google-chrome.desktop
+application/rdf+xml=helium.desktop
+application/rss+xml=helium.desktop
+application/vnd.mozilla.xul+xml=helium.desktop
+application/xhtml+xml=helium.desktop
+application/xml=helium.desktop
+text/html=helium.desktop
+text/xml=helium.desktop
+x-scheme-handler/http=helium.desktop
+x-scheme-handler/https=helium.desktop
+x-scheme-handler/unknown=helium.desktop
+x-scheme-handler/about=helium.desktop
 x-scheme-handler/tg=org.telegram.desktop.desktop
 x-scheme-handler/tonsite=org.telegram.desktop.desktop
 

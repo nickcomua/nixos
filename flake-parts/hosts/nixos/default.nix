@@ -519,7 +519,7 @@ in {
     pathsToLink = ["/share/omarchy"];
     variables = {
       XDG_RUNTIME_DIR = "/run/user/$UID";
-      BROWSER = "floorp";
+      BROWSER = "helium";
       BWS_ACCESS_TOKEN = "$(cat ${config.sops.secrets."BWS_ACCESS_TOKEN".path})";
       BWS_SERVER_URL = "https://vault.bitwarden.eu";
     };

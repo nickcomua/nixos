@@ -9,7 +9,7 @@
     ".config/hypr/input.lua": "195f194a3d4f96cbc224468c7fc406d5cfeb7846c1a161cb1f33d404f413f0d3",
     ".config/hypr/looknfeel.lua": "e293678ff7e4d6c0c415534ea500288c5b97a12428fd9dc4ba8776e31dae20d1",
     ".config/hypr/monitors.lua": "82e671d8b82fa6a2db7ff1d3add567010b85809dd7d2eede2387744db621029f",
-    ".config/mimeapps.list": "b307e63c746f15754327be9fb02efb3d0a75aaea8e1cd1f0c78597096ab7626f",
+    ".config/mimeapps.list": "57a70efc5b253b5e47f3d9a8333a6df618bf25078dd7aec36b765ea0af76cff7",
     ".config/nixarchy/advanced.nix": "784ce14b265a004db0b2ecae61fa5dc25c05d5b32a8a36825d49f22a993daa03",
     ".config/nixarchy/apps.nix": "2854c29563ba64ffdcfd80bb5d7845cef48e11d9796b0bca4ce24e723c2de158",
     ".config/nixarchy/services.nix": "df1ce32c9c6c1ae3571ad5c2f261f9c441e32ef8bcda2dde2259dcfa5e51cc2a",

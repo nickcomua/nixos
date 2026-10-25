@@ -16,8 +16,7 @@
     packages = [pkgs.brave];
   };
 
-  # Disable Horse Browser as default, use Google Chrome instead
-  # programs.horse-browser.setAsDefault = false;
+  home.sessionVariables.BROWSER = "helium";
 
   # Omarchy owns mutable application defaults and Hyprland Lua settings.
   services.nixi.enable = false;

@@ -27,6 +27,7 @@ in {
     ./configuration.nix
     ./hardware-configuration.nix
     ./monitoring.nix
+    ./webdav.nix
     ./tobii.nix
     ../../modules/nixos/anywherelan.nix
     inputs.sops-nix.nixosModules.sops

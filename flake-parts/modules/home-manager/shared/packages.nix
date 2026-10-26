@@ -52,12 +52,7 @@
     settings.user.name = lib.mkDefault "Mykola Korniichuk";
     settings.user.email = lib.mkDefault "mykola.korniichuk.ua@gmail.com";
 
-    signing = {
-      key = "DA16D6435985D05EE87223C7DB5C5C04C419C4C6!";
-      signByDefault = true;
-      format = "openpgp";
-      signer = "${pkgs.gnupg}/bin/gpg";
-    };
-    settings.tag.gpgSign = true;
+    signing.signByDefault = false;
+    settings.tag.gpgSign = false;
   };
 }

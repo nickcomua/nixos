@@ -1,12 +1,5 @@
-{pkgs, ...}: let
-  signer = pkgs.writeShellApplication {
-    name = "git-gpg";
-    runtimeInputs = [pkgs.gnupg];
-    text = builtins.readFile ./gpg-sign.sh;
-  };
-in {
+{pkgs, ...}: {
   programs.gnupg.agent.pinentryPackage = pkgs.pinentry-qt;
-  environment.systemPackages = [signer];
 
   home-manager.users.nick = {
     config,
@@ -20,19 +13,21 @@ in {
       # its USB interface through scdaemon's built-in, exclusive CCID driver.
       scdaemonSettings.disable-ccid = true;
     };
-    programs.git.signing.signer = lib.mkForce (lib.getExe signer);
 
-    # gg updates recent-workspaces in this file, so retain a writable jj config
-    # and change only the signer rather than replacing it with a store symlink.
+    # OpenPGP signing was removed. Do not point git or jj back at the card signer.
     home.activation.migrateGpgSigner = lib.hm.dag.entryAfter ["writeBoundary"] ''
       legacy="${config.home.homeDirectory}/Documents/github-yubikey-setup"
       if [ -d "$legacy/signing" ]; then
         run ${pkgs.gnupg}/bin/gpgconf --homedir "$legacy/signing" --kill all
       fi
-      run ${pkgs.jujutsu}/bin/jj config set --user signing.backends.gpg.program ${lib.getExe signer}
-      if [ -f "$HOME/.gitconfig" ] && \
-         [ "$(${pkgs.git}/bin/git config --file "$HOME/.gitconfig" --get gpg.program || true)" = "$legacy/git-gpg" ]; then
-        run ${pkgs.git}/bin/git config --file "$HOME/.gitconfig" gpg.program ${lib.getExe signer}
+      run ${pkgs.jujutsu}/bin/jj config set --user signing.behavior drop
+      run ${pkgs.jujutsu}/bin/jj config unset --user signing.key || true
+      run ${pkgs.jujutsu}/bin/jj config unset --user signing.backends.gpg.program || true
+      if [ -f "$HOME/.gitconfig" ]; then
+        run ${pkgs.git}/bin/git config --file "$HOME/.gitconfig" --unset-all user.signingkey || true
+        run ${pkgs.git}/bin/git config --file "$HOME/.gitconfig" --unset-all gpg.program || true
+        run ${pkgs.git}/bin/git config --file "$HOME/.gitconfig" commit.gpgsign false
+        run ${pkgs.git}/bin/git config --file "$HOME/.gitconfig" tag.gpgSign false
       fi
     '';
   };

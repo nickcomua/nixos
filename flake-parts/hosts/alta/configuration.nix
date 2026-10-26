@@ -218,10 +218,12 @@ in {
     };
     extraUsers = {
       alta.openssh.authorizedKeys.keys = [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHwmEAgq2ywgSznk9GKaXlcE8X/+dfX4HKdR1BL/5C0R cactus-maintenance"
         "sk-ssh-ed25519@openssh.com AAAAGnNrLXNzaC1lZDI1NTE5QG9wZW5zc2guY29tAAAAIEuxsuGRgSwuYMG6qnRfp6PtKJeqiodnoBZfWjr60cVrAAAACnNzaDpiYWNrdXA= mykola.korniichuk.ua@gmail.com"
         "sk-ssh-ed25519@openssh.com AAAAGnNrLXNzaC1lZDI1NTE5QG9wZW5zc2guY29tAAAAIBrifBZCQY/7CMq0ilnotbmiwL19La8YEklFFgi+Q6QDAAAACHNzaDptYWlu mykola.korniichuk.ua@gmail.com"
       ];
       root.openssh.authorizedKeys.keys = [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHwmEAgq2ywgSznk9GKaXlcE8X/+dfX4HKdR1BL/5C0R cactus-maintenance"
         "sk-ssh-ed25519@openssh.com AAAAGnNrLXNzaC1lZDI1NTE5QG9wZW5zc2guY29tAAAAIEuxsuGRgSwuYMG6qnRfp6PtKJeqiodnoBZfWjr60cVrAAAACnNzaDpiYWNrdXA= mykola.korniichuk.ua@gmail.com"
         "sk-ssh-ed25519@openssh.com AAAAGnNrLXNzaC1lZDI1NTE5QG9wZW5zc2guY29tAAAAIBrifBZCQY/7CMq0ilnotbmiwL19La8YEklFFgi+Q6QDAAAACHNzaDptYWlu mykola.korniichuk.ua@gmail.com"
       ];

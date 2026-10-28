@@ -1,4 +1,4 @@
-# Whisper transcription tool for OpenClaw
+# Whisper transcription tool
 {
   config,
   lib,

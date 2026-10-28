@@ -64,15 +64,16 @@
       url = "https://flakehub.com/f/Mic92/sops-nix/0";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    nix-openclaw = {
-      url = "github:nickcomua/nix-openclaw";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
 
     # --- MAIN PC SPECIFIC ---
     helium = {
       url = "github:oxcl/nix-flake-helium-browser";
       inputs.nixpkgs.follows = "nixpkgs";
+    };
+    # Local Helium Linux build; replaces the upstream .deb fetched by the helium flake.
+    helium-deb = {
+      url = "path:/home/nick/Documents/helium-ci/helium-bin_0.20.1.1-1_amd64.deb";
+      flake = false;
     };
     horse-browser = {
       url = "git+ssh://git@github.com/nickcomua/horse-browser-nix.git?ref=main";

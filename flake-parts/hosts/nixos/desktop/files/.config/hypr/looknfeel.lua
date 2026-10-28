@@ -2,3 +2,6 @@
 for _, class in ipairs({ "org.telegram.desktop", "Slack", "discord", "Bitwarden", "1Password" }) do
   o.window(class, { no_screen_share = true })
 end
+
+-- Compositor fullscreen without telling Helium (no browser F11 chrome).
+o.window("^(helium)$", { fullscreen_state = "2 0" })

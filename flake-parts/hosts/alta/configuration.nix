@@ -14,6 +14,22 @@
     export BWS_SERVER_URL="${bwsServerUrl}"
     exec ${pkgs.bws}/bin/bws "$@"
   '';
+
+  # Headless: no login keyring. The sops file remains the bootstrap token,
+  # and the SSH host key decrypts secrets.yaml for the sops provider.
+  secretspecCli = pkgs.writeShellScriptBin "secretspec" ''
+    set -euo pipefail
+    if [[ -z "''${BWS_ACCESS_TOKEN:-}" && -r ${config.sops.secrets.BWS_ACCESS_TOKEN.path} ]]; then
+      export BWS_ACCESS_TOKEN="$(${pkgs.coreutils}/bin/cat ${config.sops.secrets.BWS_ACCESS_TOKEN.path})"
+    fi
+    if [[ -z "''${SOPS_AGE_SSH_PRIVATE_KEY_FILE:-}" && -r /etc/ssh/ssh_host_ed25519_key ]]; then
+      export SOPS_AGE_SSH_PRIVATE_KEY_FILE=/etc/ssh/ssh_host_ed25519_key
+    fi
+    export BWS_SERVER_URL="''${BWS_SERVER_URL:-${bwsServerUrl}}"
+    export SECRETSPEC_PROFILE="''${SECRETSPEC_PROFILE:-alta}"
+    export PATH="${pkgs.sops}/bin:${pkgs.bws}/bin:$PATH"
+    exec ${pkgs.secretspec}/bin/secretspec "$@"
+  '';
 in {
   imports = [
     ./hardware-configuration.nix
@@ -176,6 +192,8 @@ in {
 
   environment.systemPackages = with pkgs; [
     bwsCli
+    secretspecCli
+    sops
     git
     jujutsu
     gg-jj

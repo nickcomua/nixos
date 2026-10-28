@@ -58,7 +58,7 @@ flake-parts/
 │       └── mykolas-macbook-pro/  # macOS host (aarch64-darwin)
 └── modules/
     ├── home-manager/
-    │   ├── shared/          # Cross-platform (zsh, packages, openclaw)
+    │   ├── shared/          # Cross-platform (zsh, packages)
     │   ├── linux/           # Linux-specific modules
     │   ├── darwin/          # macOS-specific modules
     │   ├── nixarchy/        # Omarchy desktop and exportable customization

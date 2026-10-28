@@ -38,6 +38,13 @@
       exec /etc/profiles/per-user/nick/bin/nixarchy-config apply "$@"
     ''
   );
+  # The Helium NixOS module always does `package.override { flags }`, which
+  # would drop a following overrideAttrs (local .deb). Re-apply src here.
+  heliumWithLocalDeb = pkg:
+    pkg.overrideAttrs (_old: {
+      src = inputs.helium-deb;
+    });
+  heliumBase = pkgs.callPackage "${inputs.helium}/helium.nix" {};
 in {
   imports = [
     ./hardware-configuration.nix
@@ -64,7 +71,17 @@ in {
   ];
 
   programs.helium.enable = true;
-  xdg.portal.extraPortals = [pkgs.xdg-desktop-portal-gnome];
+  programs.helium.package = let
+    pkg = heliumWithLocalDeb heliumBase;
+  in
+    pkg
+    // {
+      override = args: heliumWithLocalDeb (heliumBase.override args);
+    };
+  xdg.portal.extraPortals = [
+    pkgs.xdg-desktop-portal-gnome
+    pkgs.xdg-desktop-portal-luminous
+  ];
 
   programs.nixarchy = {
     enable = true;
@@ -114,7 +131,6 @@ in {
     defaultSopsFile = ../../../secrets.yaml;
     age.keyFile = "/home/nick/.config/sops/age/keys.txt";
     secrets = {
-      "openclaw-hooks-token" = {};
       "gmail-push-token" = {};
       "telegram-bot-token" = {};
       "BWS_ACCESS_TOKEN" = {
@@ -279,6 +295,9 @@ in {
 
     tailscale.enable = true;
     seatd.enable = true;
+    # Hyprland/SDDM, not Plasma. gnome-keyring owns org.freedesktop.secrets
+    # and the Secret portal. KWallet would compete for that bus. The daemon
+    # stays secrets-only so it does not replace gcr-ssh-agent.
     gnome.gnome-keyring.enable = true;
 
     udev.extraRules = ''
@@ -397,7 +416,10 @@ in {
         unixAuth = false;
         fprintAuth = false;
       };
-      gdm-password.enableGnomeKeyring = true;
+      # SDDM's session includes login, but its auth stack does not. Without
+      # this, pam_gnome_keyring never sees the login password and cannot
+      # unlock the keyring on a graphical login.
+      sddm.enableGnomeKeyring = true;
       login.u2fAuth = true;
       sudo.u2fAuth = true;
     };
@@ -468,6 +490,7 @@ in {
       xwayland.enable = true;
     };
     kdeconnect.enable = true;
+    # sshfs: phone file browsing. krfb: phone-as-second-screen (virtual monitor).
     # Steam and its CA workaround are declared in the Nixarchy app selection.
     zsh.enable = true;
     firefox.enable = true;
@@ -521,7 +544,8 @@ in {
     variables = {
       XDG_RUNTIME_DIR = "/run/user/$UID";
       BROWSER = "helium";
-      BWS_ACCESS_TOKEN = "$(cat ${config.sops.secrets."BWS_ACCESS_TOKEN".path})";
+      # The machine token is in the login keyring, not the process environment.
+      # pam_env would store this as a literal "$(cat ...)" and would not expand it.
       BWS_SERVER_URL = "https://vault.bitwarden.eu";
     };
     etc."inputrc".text = ''
@@ -530,6 +554,8 @@ in {
     '';
     systemPackages = with pkgs; [
       applyDesktop
+      kdePackages.krfb
+      sshfs
       yubioath-flutter
       kleopatra
       # Nixarchy's enabled apps own Chrome, Ghostty, VS Code, Zed,
@@ -572,7 +598,8 @@ in {
       kdePackages.ark
       kdePackages.partitionmanager
       bitwarden-cli
-
+      secretspec
+      sops
       openrazer-daemon
       polychromatic
       age

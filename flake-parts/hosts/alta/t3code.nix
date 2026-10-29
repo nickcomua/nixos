@@ -56,7 +56,7 @@ in {
       UMask = "0077";
       # Deliberately allow project/home writes and JIT/subprocess execution.
       # T3 is an agent host, not a read-only web server. Never run it as root.
-      NoNewPrivileges = true;
+      NoNewPrivileges = false;
     };
   };
 }

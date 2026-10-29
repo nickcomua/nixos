@@ -12,7 +12,9 @@
   tokenFile = "/run/secrets/BWS_ACCESS_TOKEN";
   lookup = ''
     keyring_lookup() {
-      ${secretTool} lookup service bitwarden account "$1" 2>/dev/null || true
+      ${secretTool} lookup service bitwarden username "$1" 2>/dev/null \
+        || ${secretTool} lookup service bitwarden account "$1" 2>/dev/null \
+        || true
     }
   '';
 in {

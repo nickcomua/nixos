@@ -25,16 +25,20 @@
     ];
   };
 
-  # Project aliases in secretspec.toml win over this file inside the repo.
-  # This only selects the desktop profile and drops the stale BWS project id.
+  # Desktop user defaults. Project aliases in a repo win over this file.
+  # The bws alias reads the machine token from the login keyring so nix develop
+  # and other stock secretspec binaries do not need BWS_ACCESS_TOKEN in the environment.
   xdg.configFile."secretspec/config.toml".text = ''
     #:schema https://secretspec.dev/schema/config.schema.json
 
     [defaults]
     profile = "nixos"
 
-    [defaults.providers]
-    bws = "bws://vault.bitwarden.eu@2c5e48e2-fca9-43de-a82f-b4b300e34a75"
+    [defaults.providers.bws]
+    uri = "bws://vault.bitwarden.eu@2c5e48e2-fca9-43de-a82f-b4b300e34a75"
+
+    [defaults.providers.bws.credentials]
+    access_token = { provider = "keyring", ref = { item = "bitwarden", field = "BWS_ACCESS_TOKEN" } }
   '';
 
   home.sessionVariables.BROWSER = "helium";

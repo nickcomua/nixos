@@ -29,6 +29,7 @@ in {
     ./monitoring.nix
     ./webdav.nix
     ./tobii.nix
+    ./t3code.nix
     ../../modules/nixos/anywherelan.nix
     inputs.sops-nix.nixosModules.sops
     # TODO: determinate-nix tests fail in CI - re-enable when upstream fixes it

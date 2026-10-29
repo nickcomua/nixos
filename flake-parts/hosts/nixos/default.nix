@@ -473,6 +473,7 @@ in {
       # Runtime libraries for unpacked Electron apps such as Hermes Desktop.
       libraries = with pkgs; [
         dbus
+        libsecret
         at-spi2-core
         cups
         cairo

@@ -36,11 +36,11 @@ in {
 
   # Use the existing unprivileged account: projects, provider logins and T3's
   # identity/database all stay in /home/alta, also when invoked over SSH.
-  systemd.services.t3code = {
+  users.users.alta.linger = true;
+  systemd.user.services.t3code = {
     description = "T3 Code headless coding environment";
-    wantedBy = ["multi-user.target"];
-    wants = ["network-online.target"];
-    after = ["network-online.target"];
+    wantedBy = ["default.target"];
+    unitConfig.ConditionUser = "alta";
     path = [pkgs.git pkgs.jujutsu pkgs.openssh pkgs.nodejs pkgs.curl pkgs.bash];
     environment = {
       HOME = "/home/alta";
@@ -49,8 +49,6 @@ in {
     };
     serviceConfig = {
       Type = "simple";
-      User = "alta";
-      Group = "users";
       WorkingDirectory = "/home/alta";
       ExecStart = "${lib.getExe t3} serve --host 0.0.0.0 --port 3773";
       Restart = "on-failure";

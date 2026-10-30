@@ -76,7 +76,7 @@
     zed.enable = true; #@ zed
 
     # ── Gaming ──────────────────────────────────────────────────────
-    # heroic.enable = true;  #@ heroic
+    heroic.enable = true; #@ heroic
     # lutris.enable = true;  #@ lutris
     # minecraft.enable = true;  #@ minecraft
     # retroarch.enable = true;  #@ retroarch  # Ships 13 free cores. For more -- including snes9x, genesis-plus-gx, mame and dolphin, which nixpkgs marks unfree -- set allowUnfree and override the package:   apps.retroarch.package =     pkgs.retroarch.withCores (c: [ c.snes9x c.mame c.dolphin ]);

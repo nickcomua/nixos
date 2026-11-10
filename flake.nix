@@ -70,7 +70,8 @@
       url = "github:oxcl/nix-flake-helium-browser";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # Local Helium Linux build; replaces the upstream .deb fetched by the helium flake.
+    # CI artifact nickcomua/helium-linux run 41272386671.
+    # Replaces the upstream .deb fetched by the helium flake.
     helium-deb = {
       url = "path:/home/nick/Documents/helium-ci/helium-bin_0.20.1.1-1_amd64.deb";
       flake = false;

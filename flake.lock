@@ -652,7 +652,7 @@
     "helium-deb": {
       "flake": false,
       "locked": {
-        "narHash": "sha256-Yiu7oFJgHrpJ8+m9MTdkrLy+619kbAG3G+/awo79B3o=",
+        "narHash": "sha256-K+CY8EdNck0bHMSSWVzbOycC3CEbDcLDq6FnQ+o+5BM=",
         "path": "/home/nick/Documents/helium-ci/helium-bin_0.20.1.1-1_amd64.deb",
         "type": "path"
       },

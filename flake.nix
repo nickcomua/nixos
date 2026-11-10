@@ -85,10 +85,6 @@
         nixpkgs.follows = "nixpkgs";
         # Hyprland dlopens the host Mesa driver: both must use the same glibc.
         hyprland.inputs.nixpkgs.follows = "nixpkgs";
-        # The current nixpkgs hyprtoolkit requires hyprutils >= 0.14.2.
-        hyprland.inputs.hyprutils.url = "github:hyprwm/hyprutils/v0.14.2";
-        hyprland.inputs.hyprutils.inputs.nixpkgs.follows = "nixpkgs";
-        hyprland.inputs.hyprutils.inputs.systems.follows = "nixarchy/hyprland/systems";
         home-manager.follows = "home-manager";
         sops-nix.follows = "sops-nix";
       };

@@ -37,11 +37,11 @@
 }:
 stdenv.mkDerivation (finalAttrs: {
   pname = "tradingview";
-  version = "3.4.1";
+  version = "3.5.0";
 
   src = fetchurl {
     url = "https://tvd-packages.tradingview.com/ubuntu/stable/latest/jammy/tradingview_amd64.deb";
-    hash = "sha256-7DgfQjnbF34fPZvtFRpjXE7Fa1w3gOvRsYpjZXgGyGg=";
+    hash = "sha256-Dk/KMZxjx3z5LRyh+tljgHB79qRkuIlW6ID3VUaTYH0=";
   };
 
   nativeBuildInputs = [

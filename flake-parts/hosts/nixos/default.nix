@@ -45,6 +45,34 @@
       src = inputs.helium-deb;
     });
   heliumBase = pkgs.callPackage "${inputs.helium}/helium.nix" {};
+  vlcLaunch = pkgs.writeScript "vlc-ts-tolerant" (
+    builtins.replaceStrings
+    ["@vlc@" "@python@"]
+    [
+      (lib.getExe pkgs.vlc)
+      "${pkgs.python3}/bin/python3"
+    ]
+    (builtins.readFile ./vlc-launch.sh)
+  );
+  # Desktop files call the store path, so the wrapper has to replace that path.
+  vlcTsTolerant = pkgs.symlinkJoin {
+    name = "vlc-ts-tolerant";
+    paths = [pkgs.vlc];
+    postBuild = ''
+      rm -f "$out/bin/vlc"
+      cp ${vlcLaunch} "$out/bin/vlc"
+      chmod 0555 "$out/bin/vlc"
+      for desktop in "$out"/share/applications/*.desktop; do
+        [ -e "$desktop" ] || continue
+        tmp=$(mktemp)
+        cp -L "$desktop" "$tmp"
+        rm -f "$desktop"
+        mv "$tmp" "$desktop"
+        substituteInPlace "$desktop" \
+          --replace-fail "${lib.getExe pkgs.vlc}" "$out/bin/vlc"
+      done
+    '';
+  };
 in {
   imports = [
     ./hardware-configuration.nix
@@ -69,6 +97,15 @@ in {
     ../../modules/_programs/grok-bot
     inputs.nixarchy.nixosModules.nixarchy
     ../../../nixarchy-apps.nix
+  ];
+
+  # bws 2.1.0 links against SQLite, omitted from the current nixpkgs recipe.
+  nixpkgs.overlays = [
+    (final: prev: {
+      bws = prev.bws.overrideAttrs (old: {
+        buildInputs = (old.buildInputs or []) ++ [final.sqlite];
+      });
+    })
   ];
 
   programs.helium.enable = true;
@@ -460,7 +497,8 @@ in {
   };
   systemd.user.sockets.gcr-ssh-agent = {
     wantedBy = lib.mkForce ["graphical-session.target"];
-    after = ["wayland-session-waitenv.service"];
+    # Only the service needs the display environment. Delaying the socket
+    # creates a cycle through sockets.target, basic.target and UWSM waitenv.
     partOf = ["graphical-session.target"];
   };
 
@@ -567,13 +605,6 @@ in {
       inputs.horse-browser.packages.${pkgs.stdenv.hostPlatform.system}.default
       (inputs.prismlauncher-cracked.packages.${pkgs.stdenv.hostPlatform.system}.default.override {
         jdks = [jdk25 jdk21 jdk17 jdk8];
-        # The pinned launcher still refers to nixpkgs' removed Qt 5 alias.
-        prismlauncher-unwrapped =
-          (inputs.prismlauncher-cracked.packages.${pkgs.stdenv.hostPlatform.system}.prismlauncher-unwrapped.override {
-            extra-cmake-modules = kdePackages.extra-cmake-modules;
-          }).overrideAttrs (old: {
-            nativeBuildInputs = old.nativeBuildInputs ++ [pkg-config];
-          });
       })
       direnv
       bubblewrap
@@ -609,7 +640,7 @@ in {
       proton-vpn
 
       qbittorrent
-      vlc
+      vlcTsTolerant
     ];
   };
 

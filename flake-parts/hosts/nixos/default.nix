@@ -55,6 +55,7 @@ in {
     ./ssh-connection-reuse.nix
     ./iphone-usb-share.nix
     ./anywherelan.nix
+    ./waydroid.nix
     inputs.helium.nixosModules.default
     ./nixarchy-options-doc.nix
     ./os-prober.nix

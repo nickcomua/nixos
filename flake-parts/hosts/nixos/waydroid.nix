@@ -25,6 +25,7 @@
   share = pkgs.writeShellApplication {
     name = "waydroid-share";
     runtimeInputs = [
+      pkgs.acl
       pkgs.coreutils
       pkgs.util-linux
     ];
@@ -68,17 +69,37 @@
         if ! mounted "$host_out"; then
           mount --bind "$android_out" "$host_out"
         fi
+        # Android writes these as mode 0660/0770, group 1023, other none.
+        grant_host_user || true
+      }
+
+      # Named-user ACL so the current login can read new downloads before it
+      # picks up the waydroid-media group.
+      grant_host_user() {
+        setfacl -R -m u:${userName}:rwX -m d:u:${userName}:rwX "$host_out"
+      }
+
+      fix_perms() {
+        if ! mounted "$host_out"; then
+          echo "Waydroid share is not mounted ($host_out)." >&2
+          exit 1
+        fi
+        while mounted "$host_out"; do
+          grant_host_user || true
+          sleep 5
+        done
       }
 
       if [[ "$#" -ne 1 ]]; then
-        echo "usage: waydroid-share up|down" >&2
+        echo "usage: waydroid-share up|down|fix-perms" >&2
         exit 1
       fi
       case "$1" in
         up) share_up ;;
         down) share_down ;;
+        fix-perms) fix_perms ;;
         *)
-          echo "usage: waydroid-share up|down" >&2
+          echo "usage: waydroid-share up|down|fix-perms" >&2
           exit 1
           ;;
       esac
@@ -89,6 +110,12 @@ in {
   # This kernel ships nf_tables and has no ip_tables.ko. The default Waydroid
   # package calls legacy iptables and then fails while bringing up waydroid0.
   virtualisation.waydroid.package = pkgs.waydroid-nftables;
+
+  # Files Android writes under /sdcard are owned by the app and group
+  # AID_MEDIA_RW (1023), mode 0660/0770. Membership makes new files readable
+  # after the next login. The ACL service covers the session already running.
+  users.groups.waydroid-media.gid = 1023;
+  users.users.${userName}.extraGroups = ["waydroid-media"];
 
   environment.systemPackages = [share];
 
@@ -108,11 +135,25 @@ in {
     description = "Bind-mount Waydroid shared folders";
     after = ["waydroid-container.service"];
     partOf = ["waydroid-container.service"];
+    wants = ["waydroid-share-acl.service"];
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
       ExecStart = "${lib.getExe share} up";
       ExecStop = "${lib.getExe share} down";
+    };
+  };
+
+  systemd.services.waydroid-share-acl = {
+    description = "Grant the host user access to files Android writes into the shared folder";
+    after = ["waydroid-share.service"];
+    bindsTo = ["waydroid-share.service"];
+    partOf = ["waydroid-container.service"];
+    serviceConfig = {
+      Type = "simple";
+      ExecStart = "${lib.getExe share} fix-perms";
+      Restart = "on-failure";
+      RestartSec = 2;
     };
   };
 

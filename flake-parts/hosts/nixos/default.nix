@@ -82,6 +82,7 @@ in {
     ./gpg-signing.nix
     ./ssh-connection-reuse.nix
     ./iphone-usb-share.nix
+    ./wifi-hotspot.nix
     ./anywherelan.nix
     ./waydroid.nix
     inputs.helium.nixosModules.default

@@ -95,7 +95,11 @@ in {
       wifi = {
         mode = "ap";
         ssid = "nixos-hotspot";
-        band = "bg";
+        # 5 GHz. Channel 149 (5745 MHz) is an AP-capable UNII-3 channel in NL.
+        # Channels 36–64 are passive-scan only on this phy, so an AP will not start there.
+        band = "a";
+        channel = 149;
+        channel-width = 80;
         cloned-mac-address = "permanent";
       };
       wifi-security = {

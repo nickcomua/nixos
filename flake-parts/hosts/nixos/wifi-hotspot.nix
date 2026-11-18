@@ -14,7 +14,9 @@
     name = "ethernet-hotspot";
     runtimeInputs = [
       pkgs.coreutils
+      pkgs.gawk
       pkgs.gnugrep
+      pkgs.iw
       pkgs.networkmanager
     ];
     text = ''
@@ -30,6 +32,14 @@
         [[ "$(nmcli -g GENERAL.CONNECTION device show ${wifi} 2>/dev/null || true)" == "${connection}" ]]
       }
 
+      # The AX210 starts in the world domain, where 5 GHz is listen-only.
+      # Channel 149 becomes usable after the firmware hears a beacon and sets NL.
+      country_allows_ap() {
+        local code
+        code="$(iw reg get | awk '/^phy#0/{found=1} found && $1=="country"{print $2; exit}')"
+        [[ "$code" == NL:* ]]
+      }
+
       up() {
         local attempt=0
         if ! ethernet_up; then
@@ -38,14 +48,21 @@
         if hotspot_active; then
           return 0
         fi
-        while (( attempt < 8 )); do
+        while (( attempt < 15 )); do
           attempt=$((attempt + 1))
-          if nmcli -t -f NAME connection show | grep -Fxq ${connection}; then
-            if nmcli connection up ${connection} ifname ${wifi}; then
-              return 0
-            fi
+          if ! nmcli -t -f NAME connection show | grep -Fxq ${connection}; then
+            sleep 1
+            continue
           fi
-          sleep 1
+          if ! country_allows_ap; then
+            nmcli device wifi rescan || true
+            sleep 2
+            continue
+          fi
+          if nmcli connection up ${connection} ifname ${wifi}; then
+            return 0
+          fi
+          sleep 2
         done
         printf 'ethernet-hotspot: could not start the hotspot\n' >&2
         return 1
@@ -142,16 +159,20 @@ in {
     internalIPs = [subnet];
   };
 
-  networking.firewall.extraCommands = ''
-    iptables -w -C nixos-fw -i ${wifi} -p udp --dport 67 -j nixos-fw-accept 2>/dev/null || iptables -w -I nixos-fw 1 -i ${wifi} -p udp --dport 67 -j nixos-fw-accept
-    iptables -w -C nixos-fw -i ${wifi} -s ${subnet} -p udp --dport 53 -j nixos-fw-accept 2>/dev/null || iptables -w -I nixos-fw 1 -i ${wifi} -s ${subnet} -p udp --dport 53 -j nixos-fw-accept
-    iptables -w -C nixos-fw -i ${wifi} -s ${subnet} -p tcp --dport 53 -j nixos-fw-accept 2>/dev/null || iptables -w -I nixos-fw 1 -i ${wifi} -s ${subnet} -p tcp --dport 53 -j nixos-fw-accept
-  '';
-  networking.firewall.extraStopCommands = ''
-    iptables -w -D nixos-fw -i ${wifi} -p udp --dport 67 -j nixos-fw-accept 2>/dev/null || true
-    iptables -w -D nixos-fw -i ${wifi} -s ${subnet} -p udp --dport 53 -j nixos-fw-accept 2>/dev/null || true
-    iptables -w -D nixos-fw -i ${wifi} -s ${subnet} -p tcp --dport 53 -j nixos-fw-accept 2>/dev/null || true
-  '';
+  # DHCP, DNS, and T3 Code for clients on the hotspot interface.
+  # The port options cannot match a source subnet. While the radio is the
+  # access point, clients are ${subnet}. On any other network, these ports
+  # are open on ${wifi} as well.
+  networking.firewall.interfaces.${wifi} = {
+    allowedTCPPorts = [
+      53
+      3773
+    ];
+    allowedUDPPorts = [
+      53
+      67
+    ];
+  };
 
   systemd.services.wifi-hotspot-psk = {
     description = "Create the Wi-Fi hotspot passphrase if it is missing";
@@ -193,6 +214,25 @@ in {
       Type = "oneshot";
       RemainAfterExit = true;
       ExecStart = "${lib.getExe hotspot} sync";
+    };
+  };
+
+  # The boot oneshot often runs before the firmware has a country code, and the
+  # dispatcher gives up after that. Keep reconciling until the access point is up.
+  systemd.services.ethernet-hotspot-retry = {
+    description = "Retry the Ethernet Wi-Fi hotspot";
+    after = ["NetworkManager.service"];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${lib.getExe hotspot} sync";
+    };
+  };
+  systemd.timers.ethernet-hotspot-retry = {
+    wantedBy = ["timers.target"];
+    timerConfig = {
+      OnBootSec = "20s";
+      OnUnitActiveSec = "20s";
+      AccuracySec = "5s";
     };
   };
 
